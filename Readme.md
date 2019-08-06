@@ -1,7 +1,7 @@
 # Личный проект «YetiCave»
 
 * Студент: [Мария Исаева](https://up.htmlacademy.ru/php/10/user/147230).
-* Наставник: `Неизвестно`.
+* Наставник: [Михаил Куприянов](https://htmlacademy.ru/profile/id541075).
 
 ---
 
