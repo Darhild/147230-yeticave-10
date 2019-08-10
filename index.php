@@ -1,7 +1,27 @@
 <?php
 $is_auth = rand(0, 1);
 $user_name = "Maria";
-$categories = ["Доски и лыжи","Крепления","Ботинки","Одежда","Инструменты","Разное"];
+$categories = [
+    [
+        "name" => "Доски и лыжи"
+    ],
+    [
+        "name" => "Крепления"
+    ],
+    [
+        "name" => "Ботинки"
+    ],
+    [
+        "name" => "Одежда"
+    ],
+    [
+        "name" => "Инструменты"
+    ],
+    [
+        "name" => "Разное"
+    ]
+];
+
 $lots = [
     [
         "name" => "2014 Rossignol District Snowboard",
@@ -40,7 +60,6 @@ $lots = [
         "url" => "img/lot-6.jpg"
     ]
 ];
-
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -93,7 +112,7 @@ $lots = [
         <ul class="promo__list">
             <?php foreach ($categories as $category): ?>
             <li class="promo__item promo__item--boards">
-                <a class="promo__link" href="pages/all-lots.html"><?=$category; ?></a>
+                <a class="promo__link" href="pages/all-lots.html"><?=$category["name"]; ?></a>
             </li>
             <?php endforeach; ?>
         </ul>
@@ -133,7 +152,7 @@ $lots = [
         <ul class="nav__list container">
             <?php foreach ($categories as $category): ?>
             <li class="nav__item">
-                <a href="pages/all-lots.html"><?=$category;?></a>
+                <a href="pages/all-lots.html"><?=$category["name"];?></a>
             </li>
             <?php endforeach; ?>
         </ul>
