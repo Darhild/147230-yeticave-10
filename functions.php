@@ -19,14 +19,14 @@ function format_price($num)
 }
 
 /**
- * Форматирует цену, округляя до целого числа, отделяя разряды пробелом и добавляя знак рубля
+ * Рассчитывает временной интервал от текущего момента до переданной даты
 
- * @param float $num Цена
- * @return string Отформатированная цена
+ * @param string $date Дата в формате "ГГГГ-ММ-ДД"
+ * @return array Часы и минуты, остающиеся до наступления указанной даты
  */
-function count_time_diff($date) 
+function count_time_diff($date)
 {
-    $date_now = date_create("now");    
+    $date_now = date_create("now");
     $date_future = date_create($date);
 
     if ($date_future > $date_now) {
@@ -36,10 +36,9 @@ function count_time_diff($date)
         $minutes_before_date = date_interval_format($diff, "%i");
         $hours_before_date = $days_diff * 24 + $hours_diff;
 
-        return [ $hours_before_date, $minutes_before_date ];        
+        return [ $hours_before_date, $minutes_before_date ];
     }
     else {
         return [ 0, 0 ];
-    }    
-
+    }
 }
