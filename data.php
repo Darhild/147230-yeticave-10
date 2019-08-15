@@ -24,7 +24,7 @@ $categories = [
 
 $lots = [
     [
-        "name" => "<b>2014 Rossignol District Snowboard</b>",
+        "name" => "2014 Rossignol District Snowboard",
         "category" => "Доски и лыжи",
         "price" => 10999,
         "url" => "img/lot-1.jpg"
@@ -60,4 +60,4 @@ $lots = [
         "url" => "img/lot-6.jpg"
     ]
 ];
-?>
+
