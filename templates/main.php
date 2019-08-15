@@ -1,3 +1,7 @@
+<?php
+require_once "functions.php";
+?>
+
 <main class="container">
     <section class="promo">
         <h2 class="promo__title">Нужен стафф для катки?</h2>
@@ -29,7 +33,17 @@
                                 <span class="lot__cost"><?=format_price($lot["price"]); ?></span>
                             </div>
                             <div class="lot__timer timer">
-                                12:23
+                                <?php 
+                                $hours = count_time_diff($lot["delete_time"])[0];
+                                $minutes = count_time_diff($lot["delete_time"])[1];
+
+                                if ($hours < 1): ?> 
+                                <div class="timer—finishing">
+                                <?php else: ?>
+                                <div>
+                                <?php endif; ?> 
+                                    <?=$hours . ":" . $minutes; ?>
+                                </div>
                             </div>
                         </div>
                     </div>
