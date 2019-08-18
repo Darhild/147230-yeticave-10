@@ -1,0 +1,2 @@
+INSERT into category
+SET
