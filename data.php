@@ -28,7 +28,7 @@ $lots = [
         "category" => "Доски и лыжи",
         "price" => 10999,
         "url" => "img/lot-1.jpg",
-        "delete_time" => "2019-08-15"
+        "delete_time" => "2020-08-19"
     ],
     [
         "name" => "DC Ply Mens 2016/2017 Snowboard",
@@ -42,28 +42,28 @@ $lots = [
         "category" => "Крепления",
         "price" => 8000,
         "url" => "img/lot-3.jpg",
-        "delete_time" => "2019-08-17"
+        "delete_time" => "2019-08-18"
     ],
     [
         "name" => "Ботинки для сноуборда DC Mutiny Charocal",
         "category" => "Ботинки",
         "price" => 10999,
         "url" => "img/lot-4.jpg",
-        "delete_time" => "2019-08-16"
+        "delete_time" => "2019-08-21"
     ],
     [
         "name" => "Куртка для сноуборда DC Mutiny Charocal",
         "category" => "Одежда",
         "price" => 7500,
         "url" => "img/lot-5.jpg",
-        "delete_time" => "2019-08-18"
+        "delete_time" => "2019-08-22"
     ],
     [
         "name" => "Маска Oakley Canopy",
         "category" => "Разное",
         "price" => 5400,
         "url" => "img/lot-6.jpg",
-        "delete_time" => "2019-08-14"
+        "delete_time" => "2019-08-23"
     ]
 ];
 

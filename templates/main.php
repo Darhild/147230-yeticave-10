@@ -32,16 +32,8 @@ require_once "functions.php";
                                 <span class="lot__amount">Стартовая цена</span>
                                 <span class="lot__cost"><?=format_price($lot["price"]); ?></span>
                             </div>
-                            <div class="lot__timer timer">
-                                <?php
-                                [$hours, $minutes] = count_time_diff($lot["delete_time"]);
-                                if ($hours < 1): ?>
-                                <div class="timer—finishing">
-                                <?php else: ?>
-                                <div>
-                                <?php endif;
-                                    print($hours . ":" . $minutes); ?>
-                                </div>
+                            <div class="<?=implode(" ", return_timer_class($lot["delete_time"])); ?>">
+                                <?=implode(" : ", print_timer($lot["delete_time"])); ?>
                             </div>
                         </div>
                     </div>
