@@ -13,9 +13,9 @@ CREATE TABLE lot (
     name VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
     image_url VARCHAR(255) NOT NULL,
-    start_price DECIMAL(10,2) NOT NULL,
+    start_price DECIMAL(10, 2) NOT NULL,
     date_expire DATETIME NOT NULL,
-    bid_step DECIMAL NOT NULL,
+    bid_step DECIMAL(10, 2) NOT NULL,
     seller_id INT NOT NULL,
     winner_id INT DEFAULT NULL,
     category_id INT NOT NULL
@@ -23,7 +23,7 @@ CREATE TABLE lot (
 CREATE TABLE bid (
     id INT AUTO_INCREMENT PRIMARY KEY,
     date_create DATETIME DEFAULT CURRENT_TIMESTAMP,
-    value INT NOT NULL,
+    value DECIMAL(10, 2) NOT NULL,
     user_id INT NOT NULL,
     lot_id INT NOT NULL
 );
@@ -40,6 +40,7 @@ CREATE INDEX lot_desc ON lot(description);
 CREATE INDEX fk_idx_seller ON lot(seller_id ASC);
 CREATE INDEX fk_idx_user ON bid(user_id ASC);
 CREATE INDEX fk_idx_lot ON bid(lot_id ASC);
+CREATE INDEX fk_idx_category ON lot(category_id ASC);
 
 ALTER TABLE lot 
 ADD CONSTRAINT fk_lot_user
@@ -60,4 +61,11 @@ ADD CONSTRAINT fk_bid_lot
     FOREIGN KEY (lot_id)
     REFERENCES lot(id)
     ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+ALTER TABLE lot 
+ADD CONSTRAINT fk_lot_category
+    FOREIGN KEY (category_id)
+    REFERENCES category(id)
+    ON DELETE RESTRICT
     ON UPDATE CASCADE;
