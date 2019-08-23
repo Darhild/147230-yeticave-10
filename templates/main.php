@@ -4,7 +4,7 @@
         <p class="promo__text">На нашем интернет-аукционе ты найдёшь самое эксклюзивное сноубордическое и горнолыжное снаряжение.</p>
         <ul class="promo__list">
             <?php foreach ($categories as $category): ?>
-                <li class="promo__item promo__item--boards">
+                <li class="promo__item promo__item--<?=$category["symbol_code"]; ?>">
                     <a class="promo__link" href="pages/all-lots.html"><?=strip_tags($category["name"]); ?></a>
                 </li>
             <?php endforeach; ?>
@@ -18,7 +18,7 @@
             <?php foreach ($lots as $lot): ?>
                 <li class="lots__item lot">
                     <div class="lot__image">
-                        <img src="<?=$lot["url"]; ?>" width="350" height="260" alt="">
+                        <img src="<?=$lot["image_url"]; ?>" width="350" height="260" alt="">
                     </div>
                     <div class="lot__info">
                         <span class="lot__category"><?=strip_tags($lot["category"]); ?></span>
@@ -28,8 +28,8 @@
                                 <span class="lot__amount">Стартовая цена</span>
                                 <span class="lot__cost"><?=format_price($lot["price"]); ?></span>
                             </div>
-                            <div class="<?=implode(" ", return_timer_class($lot["delete_time"])); ?>">
-                                <?=implode(" : ", print_timer($lot["delete_time"])); ?>
+                            <div class="<?=implode(" ", return_timer_class($lot["date_expire"])); ?>">
+                                <?=implode(" : ", print_timer($lot["date_expire"])); ?>
                             </div>
                         </div>
                     </div>

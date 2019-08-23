@@ -49,7 +49,7 @@ function return_timer_class($date) {
     $classes = ["lot__timer", "timer"];
 
     if ($time[0] < 1) {
-        array_push($classes, "timer-finishing");
+        array_push($classes, "timer--finishing");
     }
 
     return $classes;
