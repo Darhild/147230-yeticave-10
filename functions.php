@@ -64,8 +64,8 @@ function return_timer_class($date) {
 function print_timer($date) {
     $time = count_time_diff($date);
 
-    foreach($time as $num) {
-        str_pad($num, 2, "0", STR_PAD_LEFT);
+    foreach($time as &$num) {
+        $num = str_pad($num, 2, "0", STR_PAD_LEFT);
     }
 
     return $time;
