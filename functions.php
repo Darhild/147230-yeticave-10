@@ -44,7 +44,8 @@ function count_time_diff($date)
  * @param string $date Дата в формате "ГГГГ-ММ-ДД"
  * @return array Массив классов
  */
-function return_timer_class($date) {
+function return_timer_class($date)
+{
     $time = count_time_diff($date);
     $classes = ["lot__timer", "timer"];
 
@@ -61,7 +62,8 @@ function return_timer_class($date) {
  * @param string $date Дата в формате "ГГГГ-ММ-ДД"
  * @return array Возвращённые данные
  */
-function print_timer($date) {
+function print_timer($date)
+{
     $time = count_time_diff($date);
 
     foreach($time as &$num) {
@@ -69,4 +71,65 @@ function print_timer($date) {
     }
 
     return $time;
+}
+
+/**
+ * Возвращает массив всех данных из таблицы category
+
+ * @param mysqli $con Подключение к ДБ
+ * @return array Массив данных из таблицы category
+ */
+function getCategories($con)
+{
+    $data = [];
+
+    $sql = "SELECT * FROM category";
+    $result = mysqli_query($con, $sql);
+
+    if ($result) {
+        $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    return $data;
+}
+
+/**
+ * Возвращает массив с данными открытых лотов из таблицы lot, название категории, к которой принадлежит лот, и его текущую цену с учётом ставок
+
+ * @param mysqli $con Подключение к ДБ
+ * @return array Массив данных из таблицы lot
+ */
+function getOpenLots($con)
+{
+    $data = [];
+    $sql = "SELECT 
+                  lots.*,            
+                  IFNULL(lots.current_price, lots.start_price) as price
+            FROM (
+                    SELECT l.*,
+                           c.name as category,
+                           (   
+                               SELECT value
+                               FROM bid as b
+                               WHERE b.lot_id = l.id
+                               ORDER BY b.value DESC
+                               LIMIT 1
+                           ) as current_price
+                    FROM lot as l
+                    JOIN category as c
+                    ON l.category_id = c.id
+                    WHERE date_expire > NOW()
+                    ORDER BY date_expire ASC
+                ) as lots";
+
+    $result = mysqli_query($con, $sql);
+
+    if ($result) {
+        $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    else {
+        $data["error"] = mysqli_error($con);
+    }
+
+    return $data;
 }
