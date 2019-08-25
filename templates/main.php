@@ -15,7 +15,7 @@
             <h2>Открытые лоты</h2>
         </div>
         <ul class="lots__list">
-            <?php if ($lots["error"]): ?>
+            <?php if (isset($lots["error"])): ?>
                 <?="<p><strong>Ошибка:</strong> " . $lots["error"] . "</p>"; ?>
             <?php else: ?>
                 <?php foreach ($lots as $lot): ?>
