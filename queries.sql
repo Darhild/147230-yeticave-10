@@ -1,3 +1,4 @@
+USE `47230-yeticave-10`;
 /* Добавить существующие категории */
 INSERT into category
 (name, symbol_code)
@@ -20,12 +21,12 @@ VALUES
 INSERT into lot
 (name, description, image_url, start_price, date_expire, bid_step, seller_id, category_id)
 VALUES
-("2014 Rossignol District Snowboard", "Великолепная доска", "img/lot-1.jpg", 10999, "2019-08-22", 500, 1, 1),
-("DC Ply Mens 2016/2017 Snowboard", "Мегавеликолепная доска", "img/lot-2.jpg", 159999, "2019-08-20", 2000, 2, 1),
-("Крепления Union Contact Pro 2015 года размер L/XL", "Великолепные крепления", "img/lot-3.jpg", 8000, "2019-08-17", 500, 2, 2),
-("Ботинки для сноуборда DC Mutiny Charocal", "Великолепные ботинки", "img/lot-4.jpg", 10999, "2019-08-16", 1000, 1, 3),
-("Куртка для сноуборда DC Mutiny Charocal", "Великолепная куртка", "img/lot-5.jpg", 7500, "2019-08-26", 500, 1, 4),
-("Маска Oakley Canopy", "Великолепные очки", "img/lot-6.jpg", 5400, "2019-08-14", 100, 2, 6);
+("2014 Rossignol District Snowboard", "Великолепная доска", "img/lot-1.jpg", 10999, "2019-08-27", 500, 1, 1),
+("DC Ply Mens 2016/2017 Snowboard", "Мегавеликолепная доска", "img/lot-2.jpg", 159999, "2019-08-28", 2000, 2, 1),
+("Крепления Union Contact Pro 2015 года размер L/XL", "Великолепные крепления", "img/lot-3.jpg", 8000, "2019-08-29", 500, 2, 2),
+("Ботинки для сноуборда DC Mutiny Charocal", "Великолепные ботинки", "img/lot-4.jpg", 10999, "2019-08-30", 1000, 1, 3),
+("Куртка для сноуборда DC Mutiny Charocal", "Великолепная куртка", "img/lot-5.jpg", 7500, "2019-09-01", 500, 1, 4),
+("Маска Oakley Canopy", "Великолепные очки", "img/lot-6.jpg", 5400, "2019-09-02", 100, 2, 6);
 
 /* Добавить ставки */
 INSERT into bid
@@ -43,10 +44,13 @@ SELECT * FROM category;
 
 /* Получить самые новые открытые лоты cо следующими полями - название, стартовая цена, ссылка на изображение, цена, название категории*/
 SELECT l.name, start_price, image_url,
-(SELECT value FROM bid as b
-WHERE b.lot_id = l.id
-ORDER BY b.value DESC LIMIT 1) as current_price,
-c.name as category, date_expire
+       IFNULL((
+           SELECT value FROM bid as b
+           WHERE b.lot_id = l.id
+           ORDER BY b.value DESC LIMIT 1),
+           start_price
+       ) as current_price,
+       c.name as category, date_expire
 FROM lot as l
 JOIN category as c
 ON l.category_id = c.id
