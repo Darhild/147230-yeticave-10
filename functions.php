@@ -39,22 +39,21 @@ function count_time_diff($date)
 }
 
 /**
- * Возвращает массив с названиями классов для таймера в зависимости от того, сколько времени осталось до истечения лота
+ * Возвращает дополнительное название класса, если до истечения лота осталось меньше часа
 
  * @param string $date Дата в формате "ГГГГ-ММ-ДД"
- * @param string $block Название блока по классификации БЭМ, элементом которого является таймер
- * @return array Массив классов
+ * @return string Массив классов
  */
-function return_timer_class($date, $block)
+function return_timer_class($date)
 {
     $time = count_time_diff($date);
-    $classes = ["${block}__timer", "timer"];
+    $class = "";
 
     if ($time[0] < 1) {
-        array_push($classes, "timer--finishing");
+        $class = " timer--finishing";
     }
 
-    return $classes;
+    return $class;
 }
 
 /**
@@ -118,8 +117,9 @@ function prepareLotsQuery($con, $condition = "")
                            ) as current_price
                     FROM lot as l
                     JOIN category as c
-                    ON l.category_id = c.id
-                ) as lots " . $condition;
+                    ON l.category_id = c.id "
+                    . $condition .
+                ") as lots ";
 
     $result = mysqli_query($con, $sql);
     return $result;
@@ -134,7 +134,7 @@ function prepareLotsQuery($con, $condition = "")
 function getActiveLots($con)
 {
     $data = [];
-    $condition = "WHERE lots.date_expire > NOW() ORDER BY lots.date_expire ASC";
+    $condition = "WHERE l.date_expire > NOW() ORDER BY l.date_expire ASC";
     $result = prepareLotsQuery($con, $condition);
 
     if($result) {
@@ -167,7 +167,7 @@ function getParamFromQuery($param)
 function getLotById($con, $id)
 {
     $data = [];
-    $condition = "WHERE lots.id = $id";
+    $condition = "WHERE l.id = $id";
     $result = prepareLotsQuery($con, $condition);
 
     if($result) {

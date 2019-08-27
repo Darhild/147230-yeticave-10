@@ -20,7 +20,7 @@
             </div>
             <div class="lot-item__right">
                 <div class="lot-item__state">
-                    <div class="<?=implode(" ", return_timer_class($lot_item["date_expire"], "lot-item")); ?>">
+                    <div class="timer lot-item__timer<?=return_timer_class($lot_item["date_expire"]); ?>">
                         <?=implode(" : ", print_timer($lot_item["date_expire"])); ?>
                     </div>
                     <div class="lot-item__cost-state">

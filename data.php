@@ -13,6 +13,3 @@ $footer = include_template("footer.php", [
 ]);
 
 $lots = getActiveLots($con);
-$id = getParamFromQuery("id");
-$lot_item = getLotById($con, $id);
-
