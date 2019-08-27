@@ -5,7 +5,7 @@
         <ul class="promo__list">
             <?php foreach ($categories as $category): ?>
                 <li class="promo__item promo__item--<?=$category["symbol_code"]; ?>">
-                    <a class="promo__link" href="pages/all-lots.html"><?=strip_tags($category["name"]); ?></a>
+                    <a class="promo__link" href="pages/all-lots.html"><?=$category["name"]; ?></a>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -15,8 +15,8 @@
             <h2>Открытые лоты</h2>
         </div>
         <ul class="lots__list">
-            <?php if (isset($lots["error"])): ?>
-                <?="<p><strong>Ошибка:</strong> " . $lots["error"] . "</p>"; ?>
+            <?php if (empty($lots)): ?>
+            <?="<p>Активных лотов нет.</p>"; ?>
             <?php else: ?>
                 <?php foreach ($lots as $lot): ?>
                     <li class="lots__item lot">
@@ -24,14 +24,14 @@
                             <img src="<?=$lot["image_url"]; ?>" width="350" height="260" alt="">
                         </div>
                         <div class="lot__info">
-                            <span class="lot__category"><?=strip_tags($lot["category"]); ?></span>
-                            <h3 class="lot__title"><a class="text-link" href="pages/lot.html"><?=strip_tags($lot["name"]); ?></a></h3>
+                            <span class="lot__category"><?=$lot["category"]; ?></span>
+                            <h3 class="lot__title"><a class="text-link" href="lot.php?<?=http_build_query(["id" => $lot["id"]]); ?>"><?=strip_tags($lot["name"]); ?></a></h3>
                             <div class="lot__state">
                                 <div class="lot__rate">
                                     <span class="lot__amount">Стартовая цена</span>
                                     <span class="lot__cost"><?=format_price($lot["price"]); ?></span>
                                 </div>
-                                <div class="<?=implode(" ", return_timer_class($lot["date_expire"])); ?>">
+                                <div class="<?=implode(" ", return_timer_class($lot["date_expire"], "lot")); ?>">
                                     <?=implode(" : ", print_timer($lot["date_expire"])); ?>
                                 </div>
                             </div>
