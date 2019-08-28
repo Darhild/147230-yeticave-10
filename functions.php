@@ -46,14 +46,13 @@ function count_time_diff($date)
  */
 function return_timer_class($date)
 {
-    $time = count_time_diff($date);
-    $class = "";
+    [$hoursLeft] = count_time_diff($date);
 
-    if ($time[0] < 1) {
-        $class = " timer--finishing";
+    if ($hoursLeft < 1) {
+        return " timer--finishing";
     }
 
-    return $class;
+    return "";
 }
 
 /**
@@ -145,6 +144,17 @@ function getActiveLots($con)
 }
 
 /**
+ * Возвращает числовое значение переменной
+
+ * @param string $query Параметр, получаемый из строки запроса
+ * @return int Числовое значение переменной
+ */
+function returnIntFromQuery($query)
+{
+   return intval($query);
+}
+
+/**
  * Возвращает значение указанного параметра из строки запроса
 
  * @param string $param Параметр, получаемый из строки запроса
@@ -152,9 +162,11 @@ function getActiveLots($con)
  */
 function getParamFromQuery($param)
 {
-    $result = $_GET[$param] ?? "";
+    if ($param === "id") {
+        return returnIntFromQuery($_GET[$param]) ?? "";
+    }
 
-    return $result;
+    return $_GET[$param] ?? "";
 }
 
 /**

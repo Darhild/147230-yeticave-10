@@ -4,10 +4,16 @@ require_once "helpers.php";
 require_once "functions.php";
 require_once "data.php";
 
-$id = getParamFromQuery("id");
+$id =  getParamFromQuery("id");
+
+if (empty($id)) {
+    http_response_code(404);
+    header("Location: /pages/404.html");
+}
+
 $lot_item = getLotById($con, $id);
 
-if(empty($id) || empty($lot_item)) {
+if (empty($lot_item)) {
     http_response_code(404);
     header("Location: /pages/404.html");
 }
