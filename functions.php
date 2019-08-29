@@ -39,21 +39,20 @@ function count_time_diff($date)
 }
 
 /**
- * Возвращает массив с названиями классов для таймера в зависимости от того, сколько времени осталось до истечения лота
+ * Возвращает дополнительное название класса, если до истечения лота осталось меньше часа
 
  * @param string $date Дата в формате "ГГГГ-ММ-ДД"
- * @return array Массив классов
+ * @return string Массив классов
  */
 function return_timer_class($date)
 {
-    $time = count_time_diff($date);
-    $classes = ["lot__timer", "timer"];
+    [$hoursLeft] = count_time_diff($date);
 
-    if ($time[0] < 1) {
-        array_push($classes, "timer--finishing");
+    if ($hoursLeft < 1) {
+        return " timer--finishing";
     }
 
-    return $classes;
+    return "";
 }
 
 /**
@@ -94,14 +93,14 @@ function getCategories($con)
 }
 
 /**
- * Возвращает массив с данными открытых лотов из таблицы lot, название категории, к которой принадлежит лот, и его текущую цену с учётом ставок
+ * Возвращает результат запроса к БД с данными таблицы лотов, категорией лота и его текущей ценой
 
  * @param mysqli $con Подключение к ДБ
- * @return array Массив данных из таблицы lot
+ * @param string $condition Дополнительное условие запроса к БД, по умолчанию равно пустой строке
+ * @return mysqli_result Результат запроса к БД
  */
-function getOpenLots($con)
+function prepareLotsQuery($con, $condition = "")
 {
-    $data = [];
     $sql = "SELECT 
                   lots.*,            
                   IFNULL(lots.current_price, lots.start_price) as price
@@ -117,19 +116,78 @@ function getOpenLots($con)
                            ) as current_price
                     FROM lot as l
                     JOIN category as c
-                    ON l.category_id = c.id
-                    WHERE date_expire > NOW()
-                    ORDER BY date_expire ASC
-                ) as lots";
+                    ON l.category_id = c.id "
+                    . $condition .
+                ") as lots ";
 
     $result = mysqli_query($con, $sql);
+    return $result;
+}
 
-    if ($result) {
+/**
+ * Возвращает массив с данными открытых лотов из таблицы lot, название категории, к которой принадлежит лот, и его текущую цену с учётом ставок
+
+ * @param mysqli $con Подключение к ДБ
+ * @return array Массив данных из таблицы lot
+ */
+function getActiveLots($con)
+{
+    $data = [];
+    $condition = "WHERE l.date_expire > NOW() ORDER BY l.date_expire ASC";
+    $result = prepareLotsQuery($con, $condition);
+
+    if($result) {
         $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    }
-    else {
-        $data["error"] = mysqli_error($con);
     }
 
     return $data;
 }
+
+/**
+ * Возвращает числовое значение переменной
+
+ * @param string $query Параметр, получаемый из строки запроса
+ * @return int Числовое значение переменной
+ */
+function returnIntFromQuery($query)
+{
+   return intval($query);
+}
+
+/**
+ * Возвращает значение указанного параметра из строки запроса
+
+ * @param string $param Параметр, получаемый из строки запроса
+ * @return string Значение параметра
+ */
+function getParamFromQuery($param)
+{
+    if ($param === "id") {
+        return returnIntFromQuery($_GET[$param]) ?? "";
+    }
+
+    return $_GET[$param] ?? "";
+}
+
+/**
+ * Возвращает массив с данными лота, соответствующего переданному id, название категории, к которой принадлежит лот, и его текущую цену с учётом ставок
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $id Идентификатор лота
+ * @return array Массив данных из таблицы lot
+ */
+function getLotById($con, $id)
+{
+    $data = [];
+    $condition = "WHERE l.id = $id";
+    $result = prepareLotsQuery($con, $condition);
+
+    if($result) {
+        $data = mysqli_fetch_assoc($result);
+    }
+
+    return $data;
+}
+
+
+
