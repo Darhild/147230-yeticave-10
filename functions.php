@@ -201,6 +201,64 @@ function getPostVal($name)
 }
 
 /**
+ * Возвращает массив ошибок, полученных после валидации полей формы "Добавить новый лот"
+
+ * @param array $categories Массив категорий, к которым может принадлежать лот
+ * @return array Массив ошибок
+ */
+function validateLot($categories)
+{
+    $errors = [];
+    $cats_ids = array_column($categories, "id");
+
+    $rules = [
+        "lot-name" => function() {
+            return validateFilled("lot-name");
+        },
+        "category" => function() use ($cats_ids) {
+            return validateCategory("category", $cats_ids);
+        },
+        "message" => function() {
+            return validateFilled("message");
+        },
+        "lot-rate" => function() {
+            if (!validateFilled("lot-rate")) {
+                return isNumPositiveInt("lot-rate");
+            }
+
+            return validateFilled("lot-rate");
+        },
+        "lot-step" => function() {
+            if (!validateFilled("lot-step")) {
+                return isNumPositiveInt("lot-step");
+            }
+
+            return validateFilled("lot-step");
+        },
+        "lot-date" => function() {
+            if (!validateFilled("lot-date")) {
+                return validateDate("lot-date");
+            }
+
+            return validateFilled("lot-date");
+        }
+    ];
+
+    foreach ($_POST as $key => $value) {
+        if (isset($rules[$key])) {
+            $rule = $rules[$key];
+            $errors[$key] = $rule();
+        }
+    };
+
+    $errors["lot-img"] = validateImage("lot-img");
+
+    $errors = array_filter($errors);
+
+    return $errors;
+}
+
+/**
  * Возвращает текстовую строку, которая выводится при ошибки валидации поля "Категория", или null, если ошибки нет
 
  * @param string $field Имя поля в массиве $_POST
@@ -269,6 +327,21 @@ function validateDate($field)
 }
 
 /**
+ * Возвращает текст ошибки, если изображение не загружено или не соответствует необходимому формату
+
+ * @param string $field Имя поля в массиве $_FILES
+ * @return string Текст ошибки или null
+ */
+function validateImage($field)
+{
+    if (!empty($_FILES[$field]["name"])) {
+        return validateImageFormat($_FILES[$field]);
+    }
+
+    return "Загрузите изображение лота";
+}
+
+/**
  * Возвращает текст ошибки, если формат картинки не соответствует jpg или png, или null, если ошибки нет
 
  * @param array $file Данные файла из массива $_FILES
@@ -276,9 +349,8 @@ function validateDate($field)
  */
 function validateImageFormat($file)
 {
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $file_name = $file["tmp_name"];
-    $file_type = finfo_file($finfo, $file_name);
+    $file_type = mime_content_type($file_name);
 
     if ($file_type !== "image/jpeg" && $file_type !== "image/png") {
         return "Загрузите картинку в формате png, jpg или jpeg";
