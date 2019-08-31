@@ -8,6 +8,10 @@ $header = include_template("header.php", [
     "user_name" => $user_name
 ]);
 
+$nav = include_template("nav.php", [
+    "categories" => $categories
+]);
+
 $footer = include_template("footer.php", [
     "categories" => $categories
 ]);

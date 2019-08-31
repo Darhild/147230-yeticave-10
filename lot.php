@@ -19,7 +19,7 @@ if (empty($lot_item)) {
 }
 
 $page_content = include_template("lot-item.php", [
-    "categories" => $categories,
+    "nav" => $nav,
     "lot_item" => $lot_item
 ]);
 
@@ -27,8 +27,7 @@ $layout_content = include_template("layout.php", [
     "page_title" => $lot_item["name"],
     "header" => $header,
     "footer" => $footer,
-    "content" => $page_content,
-    "categories" => $categories
+    "content" => $page_content
 ]);
 
 print($layout_content);

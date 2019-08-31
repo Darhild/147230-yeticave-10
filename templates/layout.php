@@ -5,6 +5,7 @@
     <title><?=$page_title; ?></title>
     <link href="../css/normalize.min.css" rel="stylesheet">
     <link href="../css/style.css" rel="stylesheet">
+    <?=$calendar_css ?? ""; ?>
 </head>
 <body>
 <div class="page-wrapper">
