@@ -201,19 +201,31 @@ function get_post_val($name)
 }
 
 /**
- * Возвращает массив ошибок, полученных после валидации полей формы
+ * Возвращает массив данных из массива $_POST, отфильтрованный по нужным полям"
 
+ * @param array $fields Названия нужных полей
+ * @return array Массив данных
+ */
+function filter_post_data($fields)
+{
+    return array_intersect_key($_POST, array_flip($fields));
+}
+
+/**
+ * Возвращает массив ошибок, полученных после валидации полей формы
+ *
+ * @param array $data Данные, отфильтрованные из массива $_POST
  * @param array $validators Массив с правилами валидации
  * @return array Массив ошибок
  */
-function validate_form($validators)
+function validate_form($data, $validators)
 {
     $errors = [];
 
-    foreach ($_POST as $key => $value) {
+    foreach ($data as $key => $value) {
         if (is_callable($validators[$key])) {
             $rule = $validators[$key];
-            $errors[$key] = call_user_func($rule);
+            $errors[$key] = call_user_func($rule, $data);
         }
     };
 
@@ -225,12 +237,13 @@ function validate_form($validators)
 /**
  * Возвращает массив ошибок, полученных после валидации полей формы "Добавить новый лот"
 
+ * @param array $data Данные, отфильтрованные из массива $_POST
  * @param array $validators Массив с правилами валидации
  * @return array Массив ошибок
  */
-function validate_lot($validators)
+function validate_lot($data, $validators)
 {
-    $errors = validate_form($validators);
+    $errors = validate_form($data, $validators);
     $errors["lot-img"] = validate_image("lot-img");
     $errors = array_filter($errors);
 
@@ -240,13 +253,14 @@ function validate_lot($validators)
 /**
  * Возвращает текстовую строку, которая выводится при ошибки валидации поля "Категория", или null, если ошибки нет
 
+ * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
  * @param array $cats_ids Массив id существующих категорий
  * @return string Текст ошибки или null
  */
-function validate_category($field, $cats_ids)
+function validate_category($data, $field, $cats_ids)
 {
-    $id = $_POST[$field];
+    $id = $data[$field];
 
     if (!in_array($id, $cats_ids)) {
         return "Укажите существующую категорию";
@@ -258,28 +272,15 @@ function validate_category($field, $cats_ids)
 /**
  * Возвращает текст ошибки, если обязательное поле формы не заполнено, или null, если ошибки нет
 
+ * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
  * @return string Текст ошибки или null
  */
-function validate_filled($field)
+function validate_filled($data, $field)
 {
-    if (empty($_POST[$field])) {
+
+    if (empty($data[$field])) {
         return "Это поле должно быть заполнено";
-    }
-
-    return null;
-}
-
-/**
- * Возвращает текст ошибки, если email, указанный пользователем, не валиден, или null, если ошибки нет
-
- * @param string $field Имя поля в массиве $_POST
- * @return string Текст ошибки или null
- */
-function validate_email($field)
-{
-    if (!filter_var($_POST[$field], FILTER_VALIDATE_EMAIL)) {
-        return "Ваш Email не корректен";
     }
 
     return null;
@@ -288,12 +289,13 @@ function validate_email($field)
 /**
  * Возвращает текст ошибки, если в поле формы указано не целое положительное число, или null, если ошибки нет
 
+ * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
  * @return string Текст ошибки или null
  */
-function is_num_positive_int($field)
+function is_num_positive_int($data, $field)
 {
-    if (!ctype_digit($_POST[$field]) || $_POST[$field] <= 0) {
+    if (!ctype_digit($data[$field]) || $data[$field] <= 0) {
         return "Введите целое положительное число";
     }
 
@@ -303,13 +305,14 @@ function is_num_positive_int($field)
 /**
  * Возвращает текст ошибки, если дата, указанная в поле формы, не соответствует формату "ГГГГ-ММ-ДД", или дата не больше текущей на сутки, или null, если ошибки нет
 
+ * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
  * @return string Текст ошибки или null
  */
-function validate_date($field)
+function validate_date($data, $field)
 {
-    if (is_date_valid($_POST[$field])) {
-        [$hoursLeft] = count_time_diff($_POST[$field]);
+    if (is_date_valid($data[$field])) {
+        [$hoursLeft] = count_time_diff($data[$field]);
 
         if ($hoursLeft < 24) {
             return "Указанная дата должна быть больше текущей хотя бы на одни сутки";
@@ -392,45 +395,21 @@ function db_insert_data($con, $sql, $data = []) {
  * Записывает данные лота из массива $_POST в таблицу lot и возвращает id этого лота
 
  * @param mysqli $con Подключение к ДБ
+ * @param array $data Данные, отфильтрованные из массива $_POST
  * @return string id лота
  */
-function insert_lot($con)
+function insert_lot($con, $data)
 {
-    $name = $_POST["lot-name"];
-    $description = $_POST["message"];
+    $name = $data["lot-name"];
+    $description = $data["message"];
     $image_url = move_file($_FILES["lot-img"]);
-    $start_price = $_POST["lot-rate"];
-    $date_expire = $_POST["lot-date"];
-    $bid_step = $_POST["lot-step"];
-    $category_id = $_POST["category"];
+    $start_price = $data["lot-rate"];
+    $date_expire = $data["lot-date"];
+    $bid_step = $data["lot-step"];
+    $category_id = $data["category"];
     $sql = "INSERT INTO lot (name, description, image_url, start_price, date_expire, bid_step, category_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     $result = db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, 2]);
-
-    if (!$result) {
-        $error = mysqli_error($con);
-        return "Ошибка MySQL: " . $error;
-    }
-
-    return $result;
-}
-
-/**
- * Записывает данные пользователя из массива $_POST в таблицу user и возвращает id этого пользователя
-
- * @param mysqli $con Подключение к ДБ
- * @return string id пользователя
- */
-function insert_new_user($con)
-{
-    $email = $_POST["email"];
-    $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
-    $name = $_POST["name"];
-    $contacts = $_POST["message"];
-
-    $sql = "INSERT INTO user (email, name, password, contacts) VALUES (?, ?, ?, ?)";
-
-    $result = db_insert_data($con, $sql, [$email, $name, $password, $contacts]);
 
     if (!$result) {
         $error = mysqli_error($con);
