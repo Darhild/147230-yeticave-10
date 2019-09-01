@@ -78,7 +78,7 @@ function print_timer($date)
  * @param mysqli $con Подключение к ДБ
  * @return array Массив данных из таблицы category
  */
-function getCategories($con)
+function get_categories($con)
 {
     $data = [];
 
@@ -99,7 +99,7 @@ function getCategories($con)
  * @param string $condition Дополнительное условие запроса к БД, по умолчанию равно пустой строке
  * @return mysqli_result Результат запроса к БД
  */
-function prepareLotsQuery($con, $condition = "")
+function prepare_lots_query($con, $condition = "")
 {
     $sql = "SELECT 
                   lots.*,            
@@ -130,11 +130,11 @@ function prepareLotsQuery($con, $condition = "")
  * @param mysqli $con Подключение к ДБ
  * @return array Массив данных из таблицы lot
  */
-function getActiveLots($con)
+function get_active_lots($con)
 {
     $data = [];
     $condition = "WHERE l.date_expire > NOW() ORDER BY l.date_expire ASC";
-    $result = prepareLotsQuery($con, $condition);
+    $result = prepare_lots_query($con, $condition);
 
     if($result) {
         $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
@@ -149,7 +149,7 @@ function getActiveLots($con)
  * @param string $query Параметр, получаемый из строки запроса
  * @return int Числовое значение переменной
  */
-function returnIntFromQuery($query)
+function return_int_from_query($query)
 {
    return intval($query);
 }
@@ -160,10 +160,10 @@ function returnIntFromQuery($query)
  * @param string $param Параметр, получаемый из строки запроса
  * @return string Значение параметра
  */
-function getParamFromQuery($param)
+function get_param_from_query($param)
 {
     if ($param === "id") {
-        return returnIntFromQuery($_GET[$param]) ?? "";
+        return return_int_from_query($_GET[$param]) ?? "";
     }
 
     return $_GET[$param] ?? "";
@@ -176,11 +176,11 @@ function getParamFromQuery($param)
  * @param string $id Идентификатор лота
  * @return array Массив данных из таблицы lot
  */
-function getLotById($con, $id)
+function get_lot_by_id($con, $id)
 {
     $data = [];
     $condition = "WHERE l.id = $id";
-    $result = prepareLotsQuery($con, $condition);
+    $result = prepare_lots_query($con, $condition);
 
     if($result) {
         $data = mysqli_fetch_assoc($result);
@@ -189,5 +189,232 @@ function getLotById($con, $id)
     return $data;
 }
 
+/**
+ * Возвращает значения прежде заполненных полей из массива POST
 
+ * @param string $name Имя поля
+ * @return string Значение поля
+ */
+function get_post_val($name)
+{
+    return $_POST[$name] ?? "";
+}
 
+/**
+ * Возвращает массив данных из массива $_POST, отфильтрованный по нужным полям"
+
+ * @param array $fields Названия нужных полей
+ * @return array Массив данных
+ */
+function filter_post_data($fields)
+{
+    return array_intersect_key($_POST, array_flip($fields));
+}
+
+/**
+ * Возвращает массив ошибок, полученных после валидации полей формы
+ *
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param array $validators Массив с правилами валидации
+ * @return array Массив ошибок
+ */
+function validate_form($data, $validators)
+{
+    $errors = [];
+
+    foreach ($data as $key => $value) {
+        if (is_callable($validators[$key])) {
+            $rule = $validators[$key];
+            $errors[$key] = call_user_func($rule, $data);
+        }
+    };
+
+    $errors = array_filter($errors);
+
+    return $errors;
+}
+
+/**
+ * Возвращает массив ошибок, полученных после валидации полей формы "Добавить новый лот"
+
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param array $validators Массив с правилами валидации
+ * @return array Массив ошибок
+ */
+function validate_lot($data, $validators)
+{
+    $errors = validate_form($data, $validators);
+    $errors["lot-img"] = validate_image("lot-img");
+    $errors = array_filter($errors);
+
+    return $errors;
+}
+
+/**
+ * Возвращает текстовую строку, которая выводится при ошибки валидации поля "Категория", или null, если ошибки нет
+
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $field Имя поля в массиве $_POST
+ * @param array $cats_ids Массив id существующих категорий
+ * @return string Текст ошибки или null
+ */
+function validate_category($data, $field, $cats_ids)
+{
+    $id = $data[$field];
+
+    if (!in_array($id, $cats_ids)) {
+        return "Укажите существующую категорию";
+    }
+
+    return null;
+}
+
+/**
+ * Возвращает текст ошибки, если обязательное поле формы не заполнено, или null, если ошибки нет
+
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $field Имя поля в массиве $_POST
+ * @return string Текст ошибки или null
+ */
+function validate_filled($data, $field)
+{
+
+    if (empty($data[$field])) {
+        return "Это поле должно быть заполнено";
+    }
+
+    return null;
+}
+
+/**
+ * Возвращает текст ошибки, если в поле формы указано не целое положительное число, или null, если ошибки нет
+
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $field Имя поля в массиве $_POST
+ * @return string Текст ошибки или null
+ */
+function is_num_positive_int($data, $field)
+{
+    if (!ctype_digit($data[$field]) || $data[$field] <= 0) {
+        return "Введите целое положительное число";
+    }
+
+    return null;
+}
+
+/**
+ * Возвращает текст ошибки, если дата, указанная в поле формы, не соответствует формату "ГГГГ-ММ-ДД", или дата не больше текущей на сутки, или null, если ошибки нет
+
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $field Имя поля в массиве $_POST
+ * @return string Текст ошибки или null
+ */
+function validate_date($data, $field)
+{
+    if (is_date_valid($data[$field])) {
+        [$hoursLeft] = count_time_diff($data[$field]);
+
+        if ($hoursLeft < 24) {
+            return "Указанная дата должна быть больше текущей хотя бы на одни сутки";
+        }
+    }
+    else {
+        return "Введите дату в формате ГГГГ-ММ-ДД";
+    }
+}
+
+/**
+ * Возвращает текст ошибки, если изображение не загружено или не соответствует необходимому формату
+
+ * @param string $field Имя поля в массиве $_FILES
+ * @return string Текст ошибки или null
+ */
+function validate_image($field)
+{
+    if (!empty($_FILES[$field]["name"])) {
+        return validate_image_format($_FILES[$field]);
+    }
+
+    return "Загрузите изображение лота";
+}
+
+/**
+ * Возвращает текст ошибки, если формат картинки не соответствует jpg или png, или null, если ошибки нет
+
+ * @param array $file Данные файла из массива $_FILES
+ * @return string Текст ошибки или null
+ */
+function validate_image_format($file)
+{
+    $file_name = $file["tmp_name"];
+    $file_type = mime_content_type($file_name);
+
+    if ($file_type !== "image/jpeg" && $file_type !== "image/png") {
+        return "Загрузите картинку в формате png, jpg или jpeg";
+    }
+
+    return null;
+}
+
+/**
+ * Возвращает новую ссылку на файл после перемещения его из временной папки в папку uploads
+
+ * @param array $file Данные файла из массива $_FILES
+ * @return string Текст ошибки
+ */
+function move_file($file)
+{
+    $file_name = $file["name"];
+    $file_path = __DIR__ . '/uploads/';
+    $file_url = '/uploads/' . $file_name;
+    move_uploaded_file($file["tmp_name"], $file_path . $file_name);
+
+    return $file_url;
+}
+
+/**
+ * Записывает данные в таблицу ДБ и возвращает id добавленной строки
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $sql Строка запроса к ДБ
+ * @param array $data Массив значений, которые передаются в подготовленное выражение, по умолчанию пустой
+ * @return string id добавленной строки
+ */
+function db_insert_data($con, $sql, $data = []) {
+    $stmt = db_get_prepare_stmt($con, $sql, $data);
+    $result = mysqli_stmt_execute($stmt);
+
+    if ($result) {
+        $result = mysqli_insert_id($con);
+    }
+
+    return $result;
+}
+
+/**
+ * Записывает данные лота из массива $_POST в таблицу lot и возвращает id этого лота
+
+ * @param mysqli $con Подключение к ДБ
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @return string id лота
+ */
+function insert_lot($con, $data)
+{
+    $name = $data["lot-name"];
+    $description = $data["message"];
+    $image_url = move_file($_FILES["lot-img"]);
+    $start_price = $data["lot-rate"];
+    $date_expire = $data["lot-date"];
+    $bid_step = $data["lot-step"];
+    $category_id = $data["category"];
+    $sql = "INSERT INTO lot (name, description, image_url, start_price, date_expire, bid_step, category_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+    $result = db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, 2]);
+
+    if (!$result) {
+        $error = mysqli_error($con);
+        return "Ошибка MySQL: " . $error;
+    }
+
+    return $result;
+}
