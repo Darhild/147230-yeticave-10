@@ -20,47 +20,43 @@ $footer = include_template("footer.php", [
 $lots = get_active_lots($con);
 
 $validators = [
-    "lot-name" => function() {
-        return validate_filled("lot-name");
+    "lot-name" => function ($data) {
+        return validate_filled($data, "lot-name");
     },
-    "category" => function() use ($cats_ids) {
-        return validate_category("category", $cats_ids);
+    "category" => function ($data) use ($cats_ids) {
+        return validate_category($data, "category", $cats_ids);
     },
-    "message" => function() {
-        return validate_filled("message");
+    "message" => function ($data) {
+        return validate_filled($data, "message");
     },
-    "lot-rate" => function() {
-        if (!validate_filled("lot-rate")) {
-            return is_num_positive_int("lot-rate");
+    "lot-rate" => function ($data) {
+        if (!validate_filled($data, "lot-rate")) {
+            return is_num_positive_int($data, "lot-rate");
         }
-
-        return validate_filled("lot-rate");
+        return validate_filled($data, "lot-rate");
     },
-    "lot-step" => function() {
-        if (!validate_filled("lot-step")) {
-            return is_num_positive_int("lot-step");
+    "lot-step" => function ($data) {
+        if (!validate_filled($data, "lot-step")) {
+            return is_num_positive_int($data, "lot-step");
         }
-
-        return validate_filled("lot-step");
+        return validate_filled($data, "lot-step");
     },
-    "lot-date" => function() {
-        if (!validate_filled("lot-date")) {
-            return validate_date("lot-date");
+    "lot-date" => function ($data) {
+        if (!validate_filled($data, "lot-date")) {
+            return validate_date($data, "lot-date");
         }
-
-        return validate_filled("lot-date");
+        return validate_filled($data, "lot-date");
     },
-    "name" => function() {
-        return validate_filled("name");
+    "name" => function ($data) {
+        return validate_filled($data, "name");
     },
-    "email" => function() {
-        if (!validate_filled("email")) {
-            return validate_email("email");
+    "password" => function ($data) {
+        return validate_filled($data, "password");
+    },
+    "email" => function ($data) {
+        if (!validate_filled($data, "email")) {
+            return validate_email($data, "email");
         }
-
-        return validate_filled("email");
-    },
-    "password" => function() {
-        return validate_filled("password");
+        return validate_filled($data, "email");
     }
 ];

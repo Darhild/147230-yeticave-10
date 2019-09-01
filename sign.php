@@ -4,26 +4,26 @@ require_once "helpers.php";
 require_once "functions.php";
 require_once "data.php";
 
+$page_data = [
+    "categories" => $categories,
+    "nav" => $nav
+];
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $errors = validate_form($validators);
+    $required_fields = ["name", "email", "password", "message"];
+    $user_data = filter_post_data($required_fields);
+    $errors = validate_registration_form($con, $user_data, $validators);
 
     if (empty($errors)) {
-        insert_new_user($con);
+        insert_new_user($con, $user_data);
         header("Location: pages/login.html");
     }
+    else {
+        $page_data["errors"] = $errors;
+    }
+}
 
-    $page_content = include_template('sign-form.php', [
-        "categories" => $categories,
-        "nav" => $nav,
-        "errors" => $errors
-    ]);
-}
-else {
-    $page_content = include_template("sign-form.php", [
-        "categories" => $categories,
-        "nav" => $nav
-    ]);
-}
+$page_content = include_template("sign-form.php", $page_data);
 
 $layout_content = include_template("layout.php", [
     "page_title" => "Интернет-аукцион горнолыжного снаряжения",
