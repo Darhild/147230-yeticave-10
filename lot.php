@@ -20,7 +20,8 @@ if (empty($lot_item)) {
 
 $page_content = include_template("lot-item.php", [
     "nav" => $nav,
-    "lot_item" => $lot_item
+    "lot_item" => $lot_item,
+    "is_auth" => $is_auth
 ]);
 
 $layout_content = include_template("layout.php", [

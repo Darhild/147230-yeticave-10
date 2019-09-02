@@ -1,6 +1,6 @@
 <?php
-$is_auth = rand(0, 1);
-$user_name = "Maria";
+$is_auth = isset($_SESSION["user"]);
+$user_name = $_SESSION["user"];
 $categories = get_categories($con);
 $cats_ids = array_column($categories, "id");
 

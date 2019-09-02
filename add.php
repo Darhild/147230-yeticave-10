@@ -4,6 +4,12 @@ require_once "helpers.php";
 require_once "functions.php";
 require_once "data.php";
 
+if (!$is_auth) {
+    http_response_code(403);
+    header("Location: /");
+    exit();
+}
+
 $calendar_css = '<link href="../css/flatpickr.min.css" rel="stylesheet">';
 $page_data = [
     "categories" => $categories,
