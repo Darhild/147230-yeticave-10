@@ -202,7 +202,7 @@ function get_post_val($name)
 
 /**
  * Возвращает массив данных из массива $_POST, отфильтрованный по нужным полям"
-
+ *
  * @param array $fields Названия нужных полей
  * @return array Массив данных
  */
@@ -212,8 +212,28 @@ function filter_post_data($fields)
 }
 
 /**
+ * Возвращает строку ошибки, если пользователь при регистрации вводит уже существующий в БД email, или null
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $email Email пользователя
+ * @return string Текст ошибки или null
+ */
+function check_double_email($con, $email)
+{
+    $email = mysqli_real_escape_string($con, $email);
+    $sql = "SELECT id FROM user WHERE email = '$email'";
+    $result = mysqli_query($con, $sql);
+
+    if (mysqli_num_rows($result) > 0) {
+        return "Пользователь с этим email уже зарегистрирован";
+    }
+
+    return null;
+}
+
+/**
  * Возвращает массив ошибок, полученных после валидации полей формы
- *
+
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param array $validators Массив с правилами валидации
  * @return array Массив ошибок
@@ -228,6 +248,27 @@ function validate_form($data, $validators)
             $errors[$key] = call_user_func($rule, $data);
         }
     };
+
+    $errors = array_filter($errors);
+
+    return $errors;
+}
+
+/**
+ * Возвращает массив ошибок, полученных после валидации полей формы "Регистрация нового пользователя"
+
+ * @param mysqli $con Подключение к ДБ
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param array $validators Массив с правилами валидации
+ * @return array Массив ошибок
+ */
+function validate_registration_form($con, $data, $validators)
+{
+    $errors = validate_form($data, $validators);
+
+    if (empty($errors)) {
+        $errors["email"] = check_double_email($con, $data["email"]);
+    }
 
     $errors = array_filter($errors);
 
@@ -278,9 +319,24 @@ function validate_category($data, $field, $cats_ids)
  */
 function validate_filled($data, $field)
 {
-
     if (empty($data[$field])) {
         return "Это поле должно быть заполнено";
+    }
+
+    return null;
+}
+
+/**
+ * Возвращает текст ошибки, если email, указанный пользователем, не валиден, или null, если ошибки нет
+
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $field Имя поля в массиве $_POST
+ * @return string Текст ошибки или null
+ */
+function validate_email($data, $field)
+{
+    if (!filter_var($data[$field], FILTER_VALIDATE_EMAIL)) {
+        return "Ваш Email не корректен";
     }
 
     return null;
@@ -409,12 +465,25 @@ function insert_lot($con, $data)
     $category_id = $data["category"];
     $sql = "INSERT INTO lot (name, description, image_url, start_price, date_expire, bid_step, category_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    $result = db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, 2]);
+    return db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, 2]);
 
-    if (!$result) {
-        $error = mysqli_error($con);
-        return "Ошибка MySQL: " . $error;
-    }
+}
 
-    return $result;
+/**
+ * Записывает данные пользователя из массива $_POST в таблицу user и возвращает id этого пользователя
+
+ * @param mysqli $con Подключение к ДБ
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @return string id пользователя
+ */
+function insert_new_user($con, $data)
+{
+    $email = $data["email"];
+    $password = password_hash($data["password"], PASSWORD_DEFAULT);
+    $name = $data["name"];
+    $contacts = $data["message"];
+
+    $sql = "INSERT INTO user (email, name, password, contacts) VALUES (?, ?, ?, ?)";
+
+    return db_insert_data($con, $sql, [$email, $name, $password, $contacts]);
 }
