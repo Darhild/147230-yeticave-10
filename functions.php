@@ -212,7 +212,7 @@ function filter_post_data($fields)
 }
 
 /**
- * Возвращает строку ошибки, если полдьзователь при регистрации вводит уже существующий в БД email, или null
+ * Возвращает строку ошибки, если пользователь при регистрации вводит уже существующий в БД email, или null
 
  * @param mysqli $con Подключение к ДБ
  * @param string $email Email пользователя
@@ -465,14 +465,8 @@ function insert_lot($con, $data)
     $category_id = $data["category"];
     $sql = "INSERT INTO lot (name, description, image_url, start_price, date_expire, bid_step, category_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    $result = db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, 2]);
+    return db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, 2]);
 
-    if (!$result) {
-        $error = mysqli_error($con);
-        return "Ошибка MySQL: " . $error;
-    }
-
-    return $result;
 }
 
 /**
@@ -491,12 +485,5 @@ function insert_new_user($con, $data)
 
     $sql = "INSERT INTO user (email, name, password, contacts) VALUES (?, ?, ?, ?)";
 
-    $result = db_insert_data($con, $sql, [$email, $name, $password, $contacts]);
-
-    if (!$result) {
-        $error = mysqli_error($con);
-        return "Ошибка MySQL: " . $error;
-    }
-
-    return $result;
+    return db_insert_data($con, $sql, [$email, $name, $password, $contacts]);
 }

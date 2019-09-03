@@ -19,7 +19,7 @@ $footer = include_template("footer.php", [
 
 $lots = get_active_lots($con);
 
-$validators = [
+$lot_validators = [
     "lot-name" => function ($data) {
         return validate_filled($data, "lot-name");
     },
@@ -46,7 +46,10 @@ $validators = [
             return validate_date($data, "lot-date");
         }
         return validate_filled($data, "lot-date");
-    },
+    }    
+];
+
+$user_validators = [
     "name" => function ($data) {
         return validate_filled($data, "name");
     },
@@ -59,4 +62,4 @@ $validators = [
         }
         return validate_filled($data, "email");
     }
-];
+]

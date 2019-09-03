@@ -12,10 +12,11 @@ $page_data = [
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $required_fields = ["name", "email", "password", "message"];
     $user_data = filter_post_data($required_fields);
-    $errors = validate_registration_form($con, $user_data, $validators);
+    $errors = validate_registration_form($con, $user_data, $user_validators);
 
     if (empty($errors)) {
-        insert_new_user($con, $user_data);
+        $user = insert_new_user($con, $user_data);
+
         header("Location: pages/login.html");
     }
     else {
