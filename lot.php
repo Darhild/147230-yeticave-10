@@ -18,11 +18,30 @@ if (empty($lot_item)) {
     header("Location: error.php?code=" . ERROR_404);
 }
 
-$page_content = include_template("lot-item.php", [
+$page_data = [
+    "categories" => $categories,
     "nav" => $nav,
     "lot_item" => $lot_item,
-    "is_auth" => $is_auth
-]);
+    "is_auth" => $is_auth,
+    "lot_id" => $id
+];
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if(!$is_auth) {
+        header("Location: error.php?code=" . ERROR_USER_NOT_AUTH); 
+    }
+
+    $bid = filter_post_data(["cost"]);
+    $errors = validate_form($bid, $lot_validators);
+
+    if (empty($errors)) {
+
+    }
+
+    $page_data["errors"] = $errors;
+}
+
+$page_content = include_template("lot-item.php", $page_data);
 
 $layout_content = include_template("layout.php", [
     "page_title" => $lot_item["name"],

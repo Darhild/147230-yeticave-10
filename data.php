@@ -66,6 +66,12 @@ $lot_validators = [
             return validate_date($data, "lot-date");
         }
         return validate_filled($data, "lot-date");
+    },
+    "cost" => function($data) {
+        if (!validate_filled($data, "cost")) {
+            return is_num_positive_int($data, "cost");
+        }
+        return validate_filled($data, "lot-date");
     }
 ];
 
