@@ -28,17 +28,23 @@ $page_data = [
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if(!$is_auth) {
-        header("Location: error.php?code=" . ERROR_USER_NOT_AUTH); 
+        header("Location: error.php?code=" . ERROR_USER_NOT_AUTH);
     }
 
-    $bid = filter_post_data(["cost"]);
-    $errors = validate_form($bid, $lot_validators);
+    $bid_data = filter_post_data(["cost"]);
+    $errors = validate_bid_form($bid_data, $lot_item, $bid_validators);
 
     if (empty($errors)) {
+        $new_bid = insert_new_bid($con, $bid_data, $user_id, $lot_item["id"]);
 
+        if (!isset($new_bid)) {
+            header("Location: error.php?code=" . ERROR_DATA_INSERT);
+        }
+
+        header("Refresh:0");
     }
+        $page_data["errors"] = $errors;
 
-    $page_data["errors"] = $errors;
 }
 
 $page_content = include_template("lot-item.php", $page_data);

@@ -28,7 +28,7 @@
                         <form class="lot-item__form" action="lot.php?id=<?=$lot_id; ?>" method="post" autocomplete="off">
                             <p class="lot-item__form-item form__item<?=isset($errors["cost"]) ? " form__item--invalid" : ""; ?>">
                                 <label for="cost">Ваша ставка</label>
-                                <input id="cost" type="text" name="cost" placeholder="12 000" value="<?=get_post_val("cost"); ?>">
+                                <input id="cost" type="text" name="cost" placeholder="<?=$lot_item["price"] + $lot_item["bid_step"]; ?>" value="<?=get_post_val("cost"); ?>">
                                 <span class="form__error"><?=$errors["cost"] ?? ""; ?></span>
                             </p>
                             <button type="submit" class="button">Сделать ставку</button>

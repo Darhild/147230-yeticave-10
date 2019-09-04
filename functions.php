@@ -290,16 +290,25 @@ function verify_password($con, $data)
 
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param array $validators Массив с правилами валидации
+ * @param array $additional_data Дополнительные данные, по умолчанию пустой массиы
  * @return array Массив ошибок
  */
-function validate_form($data, $validators)
+function validate_form($data, $validators, $additional_data = array())
 {
     $errors = [];
 
     foreach ($data as $key => $value) {
         if (is_callable($validators[$key])) {
             $rule = $validators[$key];
-            $errors[$key] = call_user_func($rule, $data);
+
+            if (count($additional_data)) {
+                $errors[$key] = call_user_func_array($rule, array($data, $additional_data));
+            }
+
+            else {
+                $errors[$key] = call_user_func($rule, $data);
+            }
+
         }
     };
 
@@ -371,6 +380,23 @@ function validate_lot($data, $validators)
 }
 
 /**
+ * Возвращает массив ошибок, полученных после валидации полей формы "Добавить новый лот"
+
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param array $lot Данные лота, полученные из таблицы lot
+ * @param array $validators Массив с правилами валидации
+ * @return array Массив ошибок
+ */
+function validate_bid_form($data, $lot, $validators)
+{
+    $errors = validate_form($data, $validators, $lot);
+    $errors = array_filter($errors);
+
+    return $errors;
+}
+
+
+/**
  * Возвращает текстовую строку, которая выводится при ошибки валидации поля "Категория", или null, если ошибки нет
 
  * @param array $data Данные, отфильтрованные из массива $_POST
@@ -432,6 +458,23 @@ function is_num_positive_int($data, $field)
 {
     if (!ctype_digit($data[$field]) || $data[$field] <= 0) {
         return "Введите целое положительное число";
+    }
+
+    return null;
+}
+
+/**
+ * Возвращает текст ошибки, если указанная пользователем ставка меньше суммы текущей цены лота и минальной ставки, или null, если ошибки нет
+
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param array $lot Данные лота, полученные из таблицы lot
+ * @param string $field Имя поля в массиве $_POST
+ * @return string Текст ошибки или null
+ */
+function validate_bid($data, $field, $lot)
+{
+    if ($data[$field] < ($lot["price"] + $lot["bid_step"])) {
+        return "Введите сумму, превышающую текущую цену на размер минимальной ставки";
     }
 
     return null;
@@ -565,4 +608,22 @@ function insert_new_user($con, $data)
     $sql = "INSERT INTO user (email, name, password, contacts) VALUES (?, ?, ?, ?)";
 
     return db_insert_data($con, $sql, [$email, $name, $password, $contacts]);
+}
+
+/**
+ * Записывает данные пользователя из массива $_POST в таблицу user и возвращает id этого пользователя
+
+ * @param mysqli $con Подключение к ДБ
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $user_id Id пользователя из сессии
+ * @param string $lot_id Id лота
+ * @return string id пользователя
+ */
+function insert_new_bid($con, $data, $user_id, $lot_id)
+{
+    $bid_value = $data["cost"];
+
+    $sql = "INSERT INTO bid (value, user_id, lot_id) VALUES (?, ?, ?)";
+
+    return db_insert_data($con, $sql, [$bid_value, $user_id, $lot_id]);
 }
