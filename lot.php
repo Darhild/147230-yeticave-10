@@ -22,8 +22,7 @@ $page_data = [
     "categories" => $categories,
     "nav" => $nav,
     "lot_item" => $lot_item,
-    "is_auth" => $is_auth,
-    "lot_id" => $id
+    "is_auth" => $is_auth
 ];
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
