@@ -1,4 +1,18 @@
 <?php
+define("ERROR_LOT_INSERT", "error-lot-insert");
+define("ERROR_USER_INSERT", "error-user-insert");
+define("ERROR_USER_GET", "error-user-get");
+define("ERROR_USER_NOT_AUTH", "error_user_not_auth");
+define("ERROR_404", "error-404");
+
+$error_messages = [
+    ERROR_LOT_INSERT => "Ошибка добавления лота.",
+    ERROR_USER_INSERT => "Ошибка регистрации пользователя.",
+    ERROR_USER_GET => "Ошибка получения данных пользователя.",
+    ERROR_USER_NOT_AUTH => "Этот функционал недоступен для незарегистрированного пользователя.",
+    ERROR_404 => "Даннная страница не найдена."
+];
+
 $is_auth = isset($_SESSION["user"]);
 $user_name = $_SESSION["user"];
 $categories = get_categories($con);
@@ -19,7 +33,7 @@ $footer = include_template("footer.php", [
 
 $lots = get_active_lots($con);
 
-$validators = [
+$lot_validators = [
     "lot-name" => function ($data) {
         return validate_filled($data, "lot-name");
     },
@@ -46,7 +60,10 @@ $validators = [
             return validate_date($data, "lot-date");
         }
         return validate_filled($data, "lot-date");
-    },
+    }
+];
+
+$user_validators = [
     "name" => function ($data) {
         return validate_filled($data, "name");
     },
@@ -60,3 +77,5 @@ $validators = [
         return validate_filled($data, "email");
     }
 ];
+
+

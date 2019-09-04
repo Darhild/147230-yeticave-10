@@ -7,7 +7,7 @@ require_once "data.php";
 if ($is_auth) {
     http_response_code(403);
     header("Location: /");
-    exit();
+    exit;
 }
 
 $page_data = [
@@ -18,10 +18,15 @@ $page_data = [
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $required_fields = ["name", "email", "password", "message"];
     $user_data = filter_post_data($required_fields);
-    $errors = validate_registration_form($con, $user_data, $validators);
+    $errors = validate_registration_form($con, $user_data, $user_validators);
 
     if (empty($errors)) {
-        insert_new_user($con, $user_data);
+        $user = insert_new_user($con, $user_data);
+
+        if (!$user) {            
+            header("Location: error.php?code=" . ERROR_USER_INSERT);            
+        }
+
         header("Location: login.php");
     }
     else {

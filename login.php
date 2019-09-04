@@ -12,10 +12,15 @@ $page_data = [
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $required_fields = ["email", "password"];
     $user_data = filter_post_data($required_fields);
-    $errors = validate_login_form($con, $user_data, $validators);
+    $errors = validate_login_form($con, $user_data, $user_validators);
 
     if (empty($errors)) {
         $user = get_user_from_db($con, $user_data["email"]);
+
+        if (!$user) {
+            header("Location: error.php?code=" . ERROR_USER_GET);
+        }
+
         $_SESSION = [
             "user" => $user["name"],
             "id" => $user["id"]

@@ -545,14 +545,7 @@ function insert_lot($con, $data)
     $user_id = $_SESSION["id"];
     $sql = "INSERT INTO lot (name, description, image_url, start_price, date_expire, bid_step, category_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    $result = db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, $user_id]);
-
-    if (!$result) {
-        $error = mysqli_error($con);
-        return "Ошибка MySQL: " . $error;
-    }
-
-    return $result;
+    return db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, $user_id]);
 }
 
 /**
@@ -571,12 +564,5 @@ function insert_new_user($con, $data)
 
     $sql = "INSERT INTO user (email, name, password, contacts) VALUES (?, ?, ?, ?)";
 
-    $result = db_insert_data($con, $sql, [$email, $name, $password, $contacts]);
-
-    if (!$result) {
-        $error = mysqli_error($con);
-        return "Ошибка MySQL: " . $error;
-    }
-
-    return $result;
+    return db_insert_data($con, $sql, [$email, $name, $password, $contacts]);
 }

@@ -6,8 +6,8 @@ require_once "data.php";
 
 if (!$is_auth) {
     http_response_code(403);
-    header("Location: /");
-    exit();
+    header("Location: error.php?code=" . ERROR_USER_NOT_AUTH);
+    exit;
 }
 
 $calendar_css = '<link href="../css/flatpickr.min.css" rel="stylesheet">';
@@ -19,10 +19,16 @@ $page_data = [
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $required_fields = ["lot-name", "category", "message", "lot-rate", "lot-step", "lot-date"];
     $lots_data = filter_post_data($required_fields);
-    $errors = validate_lot($lots_data, $validators);
+    $errors = validate_lot($lots_data, $lot_validators);
 
     if (empty($errors)) {
         $newLotId = insert_lot($con, $lots_data);
+        
+        if (!$newLotId) {
+            header("Location: error.php?code=" . ERROR_LOT_INSERT);
+            exit;
+        }
+        
         header("Location: lot.php?id=" . $newLotId);
     }
 
