@@ -19,6 +19,7 @@ $error_messages = [
 ];
 
 $is_auth = isset($_SESSION["user"]);
+$user_id = $_SESSION["id"];
 $user_name = $_SESSION["user"];
 $categories = get_categories($con);
 $cats_ids = array_column($categories, "id");
