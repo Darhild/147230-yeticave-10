@@ -238,9 +238,9 @@ function get_user_from_db($con, $email)
  */
 function check_double_email($con, $email)
 {
-    $result = get_user_from_db($con, $email);
+    $user = get_user_from_db($con, $email);
 
-    if ($result > 1) {
+    if (isset($user)) {
         return "Пользователь с этим email уже зарегистрирован";
     }
 
@@ -258,7 +258,7 @@ function check_existing_email($con, $email)
 {
     $user = get_user_from_db($con, $email);
 
-    if (!$user) {
+    if (!isset($user)) {
         return "Такой пользователь не найден";
     }
 
@@ -276,7 +276,7 @@ function verify_password($con, $data)
 {
     $user = get_user_from_db($con, $data["email"]);
 
-    if ($user) {
+    if (isset($user)) {
         if (password_verify($data["password"], $user["password"])) {
             return null;
         }
@@ -531,9 +531,10 @@ function db_insert_data($con, $sql, $data = []) {
 
  * @param mysqli $con Подключение к ДБ
  * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $user_id Id пользователя из сессии
  * @return string id лота
  */
-function insert_lot($con, $data)
+function insert_lot($con, $data, $user_id)
 {
     $name = $data["lot-name"];
     $description = $data["message"];
@@ -542,7 +543,6 @@ function insert_lot($con, $data)
     $date_expire = $data["lot-date"];
     $bid_step = $data["lot-step"];
     $category_id = $data["category"];
-    $user_id = $_SESSION["id"];
     $sql = "INSERT INTO lot (name, description, image_url, start_price, date_expire, bid_step, category_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     return db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, $user_id]);

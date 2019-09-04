@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (empty($errors)) {
         $user = get_user_from_db($con, $user_data["email"]);
 
-        if (!$user) {
+        if (!isset($user)) {
             header("Location: error.php?code=" . ERROR_USER_GET);
         }
 
@@ -27,9 +27,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         ];
         header("Location: /");
     }
-    else {
-        $page_data["errors"] = $errors;
-    }
+
+    $page_data["errors"] = $errors;
+
 }
 
 $page_content = include_template("login-form.php", $page_data);

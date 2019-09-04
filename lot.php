@@ -9,7 +9,6 @@ $id = get_param_from_query("id");
 if (empty($id)) {
     http_response_code(404);
     header("Location: error.php?code=" . ERROR_404);
-    exit;
 }
 
 $lot_item = get_lot_by_id($con, $id);
@@ -17,7 +16,6 @@ $lot_item = get_lot_by_id($con, $id);
 if (empty($lot_item)) {
     http_response_code(404);
     header("Location: error.php?code=" . ERROR_404);
-    exit;
 }
 
 $page_content = include_template("lot-item.php", [

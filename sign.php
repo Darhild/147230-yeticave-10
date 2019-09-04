@@ -7,7 +7,6 @@ require_once "data.php";
 if ($is_auth) {
     http_response_code(403);
     header("Location: /");
-    exit;
 }
 
 $page_data = [
@@ -23,15 +22,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (empty($errors)) {
         $user = insert_new_user($con, $user_data);
 
-        if (!$user) {            
+        if (!isset($user)) {            
             header("Location: error.php?code=" . ERROR_USER_INSERT);            
         }
 
         header("Location: login.php");
     }
-    else {
-        $page_data["errors"] = $errors;
-    }
+
+    $page_data["errors"] = $errors;
+
 }
 
 $page_content = include_template("sign-form.php", $page_data);

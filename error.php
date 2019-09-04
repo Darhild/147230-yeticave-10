@@ -8,7 +8,6 @@ $error_code = $_REQUEST["code"] ?? "";
 
 if ($error_code === "" || !isset($error_messages[$error_code])) {
     header("Location: /");
-    exit;
 }
 
 $page_content = include_template("error-page.php", [

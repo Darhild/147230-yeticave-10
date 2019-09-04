@@ -1,8 +1,13 @@
 <?php
+if (!isset($_COOKIE["PHPSESSID"]))
+{
+  session_start();
+}
+
 define("ERROR_LOT_INSERT", "error-lot-insert");
 define("ERROR_USER_INSERT", "error-user-insert");
 define("ERROR_USER_GET", "error-user-get");
-define("ERROR_USER_NOT_AUTH", "error_user_not_auth");
+define("ERROR_USER_NOT_AUTH", "error-user-not-auth");
 define("ERROR_404", "error-404");
 
 $error_messages = [
