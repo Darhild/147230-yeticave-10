@@ -22,8 +22,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (empty($errors)) {
         $user = insert_new_user($con, $user_data);
 
-        if (!isset($user)) {            
-            header("Location: error.php?code=" . ERROR_USER_INSERT);            
+        if (!isset($user)) {
+            header("Location: error.php?code=" . ERROR_USER_INSERT);
         }
 
         header("Location: login.php");
