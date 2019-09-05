@@ -258,7 +258,7 @@ function get_user_from_db($con, $email)
  * Возвращает данные о ставках пользователя с указанным id
 
  * @param mysqli $con Подключение к ДБ
- * @param $user_id Id пользователя
+ * @param string $user_id Id пользователя
  * @return array Данные о ставках или null
  */
 
@@ -347,6 +347,8 @@ function verify_password($con, $data)
 
         return "Пароль неверен";
     }
+
+    return "Ошибка подключения к БД";
 }
 
 /**
@@ -372,7 +374,6 @@ function validate_form($data, $validators, $additional_data = array())
             else {
                 $errors[$key] = call_user_func($rule, $data);
             }
-
         }
     };
 
