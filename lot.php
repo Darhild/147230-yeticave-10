@@ -22,7 +22,8 @@ $page_data = [
     "categories" => $categories,
     "nav" => $nav,
     "lot_item" => $lot_item,
-    "is_auth" => $is_auth
+    "is_auth" => $is_auth,
+    "user_id" => $user_id
 ];
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -31,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     $bid_data = filter_post_data(["cost"]);
-    $errors = validate_bid_form($bid_data, $lot_item, $bid_validators);
+    $errors = validate_form($bid_data, $bid_validators, $lot_item);
 
     if (empty($errors)) {
         $new_bid = insert_new_bid($con, $bid_data, $user_id, $lot_item["id"]);

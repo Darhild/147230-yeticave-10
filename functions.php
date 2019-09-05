@@ -18,10 +18,9 @@ function format_price($num)
 /**
  * Рассчитывает временной интервал от текущего момента до переданной даты
  * @param string $date Дата в формате "ГГГГ-ММ-ДД"
- * @param bool $should_count_seconds Должен ли таймер считать секунды. Необязательный параметр, по умолчанию равен false
  * @return array Время, остающееся до наступления указанной даты
  */
-function count_time_diff($date, $should_count_seconds = false)
+function count_time_diff($date)
 {
     $date_now = date_create("now");
     $date_future = date_create($date);
@@ -34,27 +33,23 @@ function count_time_diff($date, $should_count_seconds = false)
         $days_diff = date_interval_format($diff, "%a");
         $hours_diff = date_interval_format($diff, "%h");
         $minutes_before_date = date_interval_format($diff, "%i");
-        $seconds_before_date = date_interval_format($diff, "%s");        
+        $seconds_before_date = date_interval_format($diff, "%s");
         $hours_before_date = $days_diff * 24 + $hours_diff;
     }
-    
-    if ($should_count_seconds) {
-        return [ $hours_before_date, $minutes_before_date, $seconds_before_date ];
-    }
 
-    return [ $hours_before_date, $minutes_before_date ];
+    return [ $hours_before_date, $minutes_before_date, $seconds_before_date ];
 }
 
 /**
  * Возвращает дополнительное название класса, если до истечения лота осталось меньше часа, указанный пользователь победил в торгах на лот, или торги окончены
 
  * @param array $data Массив с данными лота
- * @param string Ключ поля с датой в массиве $data
+ * @param string $field Ключ поля с датой в массиве $data
  * @return string Возвращаемый класс
  */
 function return_timer_class($data, $field)
 {
-    if (isset($data["user_id"]) && ($data["user_id"] === $data["winner_id"])) {
+    if (isset($data["user_id"]) && isset($data["winner_id"]) && ($data["user_id"] === $data["winner_id"])) {
         return "  timer--win";
     }
 
@@ -62,9 +57,9 @@ function return_timer_class($data, $field)
         return " timer--end";
     }
 
-    [$hoursLeft] = count_time_diff($data[$field]);
+    [$hours_left] = count_time_diff($data[$field]);
 
-    if ($hoursLeft > 0 && $hoursLeft < 1) {
+    if ($hours_left < 1) {
         return " timer--finishing";
     }
 
@@ -75,27 +70,31 @@ function return_timer_class($data, $field)
  * Возвращает данные о том, сколько времени осталось до истечения лота. Если торги на лот окончены или ставка выиграла, возвращает соответствующую информацию
 
  * @param array $data Массив с данными лота
- * @param string Ключ поля с датой в массиве $data
+ * @param string $field Ключ поля с датой в массиве $data
  * @param bool $should_count_seconds Должен ли таймер считать секунды. Необязательный параметр, по умолчанию равен false
  * @return string Возвращаемые данные
  */
 function print_timer($data, $field, $should_count_seconds = false)
-{ 
-    if (isset($data["user_id"]) && ($data["user_id"] === $data["winner_id"])) {
+{
+    if (isset($data["user_id"]) && isset($data["winner_id"]) && ($data["user_id"] === $data["winner_id"])) {
         return "Ставка выиграла";
     }
 
-    $time = count_time_diff($data[$field], $should_count_seconds);
+    $time = count_time_diff($data[$field]);
 
     if (array_sum($time) === 0) {
         return "Торги окончены";
+    }
+
+    if(!$should_count_seconds) {
+        array_pop($time);
     }
 
     foreach($time as &$num) {
         $num = str_pad($num, 2, "0", STR_PAD_LEFT);
     }
 
-    return implode(" : ", $time);
+    return implode(":", $time);
 }
 
 /**
@@ -282,14 +281,15 @@ $sql = "SELECT b.user_id,
         ON l.seller_id = u.id
         JOIN category as c 
         ON l.category_id = c.id 
-        WHERE b.user_id = '$user_id'";        
+        WHERE b.user_id = '$user_id'
+        ORDER BY bid_date_create DESC";
 
     $result = mysqli_query($con, $sql);
 
     if (!$result) {
         return null;
     }
-    
+
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
@@ -444,23 +444,6 @@ function validate_lot($data, $validators)
 }
 
 /**
- * Возвращает массив ошибок, полученных после валидации полей формы "Добавить новый лот"
-
- * @param array $data Данные, отфильтрованные из массива $_POST
- * @param array $lot Данные лота, полученные из таблицы lot
- * @param array $validators Массив с правилами валидации
- * @return array Массив ошибок
- */
-function validate_bid_form($data, $lot, $validators)
-{
-    $errors = validate_form($data, $validators, $lot);
-    $errors = array_filter($errors);
-
-    return $errors;
-}
-
-
-/**
  * Возвращает текстовую строку, которая выводится при ошибки валидации поля "Категория", или null, если ошибки нет
 
  * @param array $data Данные, отфильтрованные из массива $_POST
@@ -531,8 +514,8 @@ function is_num_positive_int($data, $field)
  * Возвращает текст ошибки, если указанная пользователем ставка меньше суммы текущей цены лота и минальной ставки, или null, если ошибки нет
 
  * @param array $data Данные, отфильтрованные из массива $_POST
- * @param array $lot Данные лота, полученные из таблицы lot
  * @param string $field Имя поля в массиве $_POST
+ * @param array $lot Данные лота, полученные из таблицы lot
  * @return string Текст ошибки или null
  */
 function validate_bid($data, $field, $lot)
@@ -560,10 +543,11 @@ function validate_date($data, $field)
         if ($ts_date < $tomorrow) {
             return "Указанная дата должна быть больше текущей хотя бы на один день";
         }
+
+        return null;
     }
-    else {
-        return "Введите дату в формате ГГГГ-ММ-ДД";
-    }
+
+    return "Введите дату в формате ГГГГ-ММ-ДД";
 }
 
 /**
@@ -696,55 +680,55 @@ function insert_new_bid($con, $data, $user_id, $lot_id)
 /**
  * Возвращает дополнительное название класса для ставки
 
- * $data array Массив с данными лота и ставки
+ * @param $data array Массив с данными лота и ставки
+ * @param string $field Ключ поля с датой в массиве $data
  * @return string Пустая строка или дополнительное название класса
  */
-function return_bid_class($data) {
+function return_bid_class($data, $field) {
     if ($data["user_id"] === $data["winner_id"]) {
-        return " rates__item--win";        
+        return " rates__item--win";
     }
 
-    $time_before_expire = array_sum(count_time_diff($date));    
+    $is_time_before_expire = (time() < strtotime($data[$field]));
 
-    if ($time_before_expire) {
-        return "";        
+    if ($is_time_before_expire) {
+        return "";
     }
 
     return " rates__item--end";
 }
 
 /**
- * Возвращает строку, указывающую, сколько времени прошло от момента переданной даты, и отформатированную в зависмости от количества прошедшего времени
+ * Возвращает отформатированную строку, указывающую, сколько времени прошло от момента переданной даты
 
- * $date string Cтрока с датой на английском языке
+ * @param $date string Cтрока с датой на английском языке
  * @return string Отформатированная строка
  */
-function return_formated_time($date) {    
+function return_formated_time($date) {
     $ts_date = strtotime($date);
     $today = strtotime("today midnight");
-    $yesterday = strtotime("yesterday midnight");    
+    $yesterday = strtotime("yesterday midnight");
 
     if ($ts_date >= $today) {
         $time_left = time() - $ts_date;
-        $hoursLeft = floor($time_left / 3600);
-        $minutesLeft = floor(($time_left % 3600) / 60);
-        $hours = "$hoursLeft " . get_noun_plural_form($hoursLeft, "час", "часа", "часов");
-        $minutes = "$minutesLeft " . get_noun_plural_form($minutesLeft, "минута", "минуты", "минут");
+        $hours_left = floor($time_left / 3600);
+        $minutes_left = floor(($time_left % 3600) / 60);
+        $hours_string = "$hours_left " . get_noun_plural_form($hours_left, "час", "часа", "часов");
+        $minutes_string = "$minutes_left " . get_noun_plural_form($minutes_left, "минута", "минуты", "минут");
 
-        if($hoursLeft < 1) {            
-            return $minutes . " назад";
+        if($hours_left < 1) {
+            return $minutes_string . " назад";
         }
 
-        return  $hours . " " . $minutes . " назад";
+        return  $hours_string . " " . $minutes_string . " назад";
     }
 
-    else if ($ts_date >= $yesterday) {
-        $time = date("h:i", $ts_date);
+    if ($ts_date >= $yesterday) {
+        $time = date("H:i", $ts_date);
 
         return "Вчера, в $time";
 
     }
-    
-    return date("d.m.Y в h:i", $ts_date);
-}
 
+    return date("d.m.Y в H:i", $ts_date);
+}

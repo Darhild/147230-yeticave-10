@@ -5,7 +5,6 @@ require_once "functions.php";
 require_once "data.php";
 
 if (!$is_auth) {
-    http_response_code(403);
     header("Location: error.php?code=" . ERROR_USER_NOT_AUTH);
 }
 
@@ -17,7 +16,7 @@ if (!isset($user_bids)) {
 
 $page_content = include_template("user-bids.php", [
     "categories" => $categories,
-    "user_bids" => $user_bids 
+    "user_bids" => $user_bids
 ]);
 
 $layout_content = include_template("layout.php", [
