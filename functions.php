@@ -18,37 +18,53 @@ function format_price($num)
 /**
  * Рассчитывает временной интервал от текущего момента до переданной даты
  * @param string $date Дата в формате "ГГГГ-ММ-ДД"
- * @return array Часы и минуты, остающиеся до наступления указанной даты
+ * @param bool $should_count_seconds Должен ли таймер считать секунды. Необязательный параметр, по умолчанию равен false
+ * @return array Время, остающееся до наступления указанной даты
  */
-function count_time_diff($date)
+function count_time_diff($date, $should_count_seconds = false)
 {
     $date_now = date_create("now");
     $date_future = date_create($date);
     $hours_before_date = 0;
     $minutes_before_date = 0;
+    $seconds_before_date = 0;
 
     if ($date_future > $date_now) {
         $diff = date_diff($date_now, $date_future);
         $days_diff = date_interval_format($diff, "%a");
         $hours_diff = date_interval_format($diff, "%h");
         $minutes_before_date = date_interval_format($diff, "%i");
+        $seconds_before_date = date_interval_format($diff, "%s");        
         $hours_before_date = $days_diff * 24 + $hours_diff;
+    }
+    
+    if ($should_count_seconds) {
+        return [ $hours_before_date, $minutes_before_date, $seconds_before_date ];
     }
 
     return [ $hours_before_date, $minutes_before_date ];
 }
 
 /**
- * Возвращает дополнительное название класса, если до истечения лота осталось меньше часа
+ * Возвращает дополнительное название класса, если до истечения лота осталось меньше часа, указанный пользователь победил в торгах на лот, или торги окончены
 
- * @param string $date Дата в формате "ГГГГ-ММ-ДД"
- * @return string Массив классов
+ * @param array $data Массив с данными лота
+ * @param string Ключ поля с датой в массиве $data
+ * @return string Возвращаемый класс
  */
-function return_timer_class($date)
+function return_timer_class($data, $field)
 {
-    [$hoursLeft] = count_time_diff($date);
+    if (isset($data["user_id"]) && ($data["user_id"] === $data["winner_id"])) {
+        return "  timer--win";
+    }
 
-    if ($hoursLeft < 1) {
+    if (array_sum(count_time_diff($data[$field])) === 0) {
+        return " timer--end";
+    }
+
+    [$hoursLeft] = count_time_diff($data[$field]);
+
+    if ($hoursLeft > 0 && $hoursLeft < 1) {
         return " timer--finishing";
     }
 
@@ -56,20 +72,30 @@ function return_timer_class($date)
 }
 
 /**
- * Возвращает массив данных о том, сколько времени осталось до истечения лота, отформатированных с ведущими нулями
+ * Возвращает данные о том, сколько времени осталось до истечения лота. Если торги на лот окончены или ставка выиграла, возвращает соответствующую информацию
 
- * @param string $date Дата в формате "ГГГГ-ММ-ДД"
- * @return array Возвращённые данные
+ * @param array $data Массив с данными лота
+ * @param string Ключ поля с датой в массиве $data
+ * @param bool $should_count_seconds Должен ли таймер считать секунды. Необязательный параметр, по умолчанию равен false
+ * @return string Возвращаемые данные
  */
-function print_timer($date)
-{
-    $time = count_time_diff($date);
+function print_timer($data, $field, $should_count_seconds = false)
+{ 
+    if (isset($data["user_id"]) && ($data["user_id"] === $data["winner_id"])) {
+        return "Ставка выиграла";
+    }
+
+    $time = count_time_diff($data[$field], $should_count_seconds);
+
+    if (array_sum($time) === 0) {
+        return "Торги окончены";
+    }
 
     foreach($time as &$num) {
         $num = str_pad($num, 2, "0", STR_PAD_LEFT);
     }
 
-    return $time;
+    return implode(" : ", $time);
 }
 
 /**
@@ -227,6 +253,44 @@ function get_user_from_db($con, $email)
     $user = mysqli_fetch_array($result, MYSQLI_ASSOC);
 
     return $user;
+}
+
+/**
+ * Возвращает данные о ставках пользователя с указанным id
+
+ * @param mysqli $con Подключение к ДБ
+ * @param $user_id Id пользователя
+ * @return array Данные о ставках или null
+ */
+
+function get_user_bids($con, $user_id)
+{
+$sql = "SELECT b.user_id, 
+               b.value as bid_value, 
+               b.date_create as bid_date_create,
+               l.id as lot_id, 
+               l.name as lot_name, 
+               l.image_url, 
+               l.date_expire as lot_date_expire, 
+               l.winner_id, 
+               u.contacts as seller_contacts, 
+               c.name as category_name 
+        FROM bid as b 
+        JOIN lot as l 
+        ON b.lot_id = l.id 
+        JOIN user as u 
+        ON l.seller_id = u.id
+        JOIN category as c 
+        ON l.category_id = c.id 
+        WHERE b.user_id = '$user_id'";        
+
+    $result = mysqli_query($con, $sql);
+
+    if (!$result) {
+        return null;
+    }
+    
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
 /**
@@ -481,7 +545,7 @@ function validate_bid($data, $field, $lot)
 }
 
 /**
- * Возвращает текст ошибки, если дата, указанная в поле формы, не соответствует формату "ГГГГ-ММ-ДД", или дата не больше текущей на сутки, или null, если ошибки нет
+ * Возвращает текст ошибки, если дата, указанная в поле формы, не соответствует формату "ГГГГ-ММ-ДД", или дата не больше текущей на день, или null, если ошибки нет
 
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
@@ -490,10 +554,11 @@ function validate_bid($data, $field, $lot)
 function validate_date($data, $field)
 {
     if (is_date_valid($data[$field])) {
-        [$hoursLeft] = count_time_diff($data[$field]);
+        $ts_date = strtotime($data[$field]);
+        $tomorrow = strtotime("tomorrow midnight");
 
-        if ($hoursLeft < 24) {
-            return "Указанная дата должна быть больше текущей хотя бы на одни сутки";
+        if ($ts_date < $tomorrow) {
+            return "Указанная дата должна быть больше текущей хотя бы на один день";
         }
     }
     else {
@@ -627,3 +692,59 @@ function insert_new_bid($con, $data, $user_id, $lot_id)
 
     return db_insert_data($con, $sql, [$bid_value, $user_id, $lot_id]);
 }
+
+/**
+ * Возвращает дополнительное название класса для ставки
+
+ * $data array Массив с данными лота и ставки
+ * @return string Пустая строка или дополнительное название класса
+ */
+function return_bid_class($data) {
+    if ($data["user_id"] === $data["winner_id"]) {
+        return " rates__item--win";        
+    }
+
+    $time_before_expire = array_sum(count_time_diff($date));    
+
+    if ($time_before_expire) {
+        return "";        
+    }
+
+    return " rates__item--end";
+}
+
+/**
+ * Возвращает строку, указывающую, сколько времени прошло от момента переданной даты, и отформатированную в зависмости от количества прошедшего времени
+
+ * $date string Cтрока с датой на английском языке
+ * @return string Отформатированная строка
+ */
+function return_formated_time($date) {    
+    $ts_date = strtotime($date);
+    $today = strtotime("today midnight");
+    $yesterday = strtotime("yesterday midnight");    
+
+    if ($ts_date >= $today) {
+        $time_left = time() - $ts_date;
+        $hoursLeft = floor($time_left / 3600);
+        $minutesLeft = floor(($time_left % 3600) / 60);
+        $hours = "$hoursLeft " . get_noun_plural_form($hoursLeft, "час", "часа", "часов");
+        $minutes = "$minutesLeft " . get_noun_plural_form($minutesLeft, "минута", "минуты", "минут");
+
+        if($hoursLeft < 1) {            
+            return $minutes . " назад";
+        }
+
+        return  $hours . " " . $minutes . " назад";
+    }
+
+    else if ($ts_date >= $yesterday) {
+        $time = date("h:i", $ts_date);
+
+        return "Вчера, в $time";
+
+    }
+    
+    return date("d.m.Y в h:i", $ts_date);
+}
+

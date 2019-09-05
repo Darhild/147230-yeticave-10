@@ -5,6 +5,7 @@ if (!isset($_COOKIE["PHPSESSID"]))
 }
 
 define("ERROR_DATA_INSERT", "error-data-insert");
+define("ERROR_DATA_GET", "error-data-get");
 define("ERROR_USER_INSERT", "error-user-insert");
 define("ERROR_USER_GET", "error-user-get");
 define("ERROR_USER_NOT_AUTH", "error-user-not-auth");
@@ -12,6 +13,7 @@ define("ERROR_404", "error-404");
 
 $error_messages = [
     ERROR_DATA_INSERT => "Ошибка добавления данных.",
+    ERROR_DATA_GET => "Ошибка получения данных.",
     ERROR_USER_INSERT => "Ошибка регистрации пользователя.",
     ERROR_USER_GET => "Ошибка получения данных пользователя.",
     ERROR_USER_NOT_AUTH => "Этот функционал недоступен для незарегистрированного пользователя.",
