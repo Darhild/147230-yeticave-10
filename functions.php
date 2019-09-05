@@ -212,6 +212,24 @@ function filter_post_data($fields)
 }
 
 /**
+ * Возвращает данные пользователя с указанным email из таблицы user
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $email Email пользователя
+ * @return array Данные пользователя
+ */
+function get_user_from_db($con, $email)
+{
+    $email = mysqli_real_escape_string($con, $email);
+    $sql = "SELECT * FROM user WHERE email = '$email'";
+
+    $result = mysqli_query($con, $sql);
+    $user = mysqli_fetch_array($result, MYSQLI_ASSOC);
+
+    return $user;
+}
+
+/**
  * Возвращает строку ошибки, если пользователь при регистрации вводит уже существующий в БД email, или null
 
  * @param mysqli $con Подключение к ДБ
@@ -220,15 +238,51 @@ function filter_post_data($fields)
  */
 function check_double_email($con, $email)
 {
-    $email = mysqli_real_escape_string($con, $email);
-    $sql = "SELECT id FROM user WHERE email = '$email'";
-    $result = mysqli_query($con, $sql);
+    $user = get_user_from_db($con, $email);
 
-    if (mysqli_num_rows($result) > 0) {
+    if (isset($user)) {
         return "Пользователь с этим email уже зарегистрирован";
     }
 
     return null;
+}
+
+/**
+ * Возвращает строку ошибки, если пользователь с указанным email не найден в БД, или null
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $email Email пользователя
+ * @return string Текст ошибки или null
+ */
+function check_existing_email($con, $email)
+{
+    $user = get_user_from_db($con, $email);
+
+    if (!isset($user)) {
+        return "Такой пользователь не найден";
+    }
+
+    return null;
+}
+
+/**
+ * Возвращает строку ошибки, если введенный пароль не совпадает с паролем, указанным при регистрации пользователя с данным email
+
+ * @param mysqli $con Подключение к ДБ
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @return string Текст ошибки или null
+ */
+function verify_password($con, $data)
+{
+    $user = get_user_from_db($con, $data["email"]);
+
+    if (isset($user)) {
+        if (password_verify($data["password"], $user["password"])) {
+            return null;
+        }
+
+        return "Пароль неверен";
+    }
 }
 
 /**
@@ -268,6 +322,31 @@ function validate_registration_form($con, $data, $validators)
 
     if (empty($errors)) {
         $errors["email"] = check_double_email($con, $data["email"]);
+    }
+
+    $errors = array_filter($errors);
+
+    return $errors;
+}
+
+/**
+ * Возвращает массив ошибок, полученных после валидации формы "Авторизация"
+
+ * @param mysqli $con Подключение к ДБ
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param array $validators Массив с правилами валидации
+ * @return array Массив ошибок
+ */
+function validate_login_form($con, $data, $validators)
+{
+    $errors = validate_form($data, $validators);
+
+    if (empty($errors)) {
+        $errors["email"] = check_existing_email($con, $data["email"]);
+
+        if(empty($errors)) {
+            $errors["password"] = verify_password($con, $data);
+        }
     }
 
     $errors = array_filter($errors);
@@ -452,9 +531,10 @@ function db_insert_data($con, $sql, $data = []) {
 
  * @param mysqli $con Подключение к ДБ
  * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $user_id Id пользователя из сессии
  * @return string id лота
  */
-function insert_lot($con, $data)
+function insert_lot($con, $data, $user_id)
 {
     $name = $data["lot-name"];
     $description = $data["message"];
@@ -465,8 +545,7 @@ function insert_lot($con, $data)
     $category_id = $data["category"];
     $sql = "INSERT INTO lot (name, description, image_url, start_price, date_expire, bid_step, category_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-    return db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, 2]);
-
+    return db_insert_data($con, $sql, [$name, $description, $image_url, $start_price, $date_expire, $bid_step, $category_id, $user_id]);
 }
 
 /**

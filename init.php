@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 if (!file_exists("config/db.php")) {
     echo 'Database config does not exist';
     exit;
