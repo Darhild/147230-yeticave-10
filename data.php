@@ -21,8 +21,11 @@ $error_messages = [
 ];
 
 $is_auth = isset($_SESSION["user"]);
-$user_id = $_SESSION["id"];
-$user_name = $_SESSION["user"];
+if(isset($is_auth )) {
+    $user_id = $_SESSION["id"];
+    $user_name = $_SESSION["user"];
+}
+
 $categories = get_categories($con);
 $cats_ids = array_column($categories, "id");
 
@@ -95,6 +98,9 @@ $user_validators = [
             return validate_email($data, "email");
         }
         return validate_filled($data, "email");
+    },
+    "message" => function ($data) {
+        return validate_filled($data, "message");
     }
 ];
 

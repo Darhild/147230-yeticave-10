@@ -16,6 +16,7 @@ if (!isset($user_bids)) {
 
 $page_content = include_template("user-bids.php", [
     "categories" => $categories,
+    "nav" => $nav,
     "user_bids" => $user_bids
 ]);
 

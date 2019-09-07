@@ -294,6 +294,42 @@ $sql = "SELECT b.user_id,
 }
 
 /**
+ * Возвращает данные о ставках на лот с указанным id
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $lot_id Id лота
+ * @return array Данные о ставках или null
+ */
+
+function get_lot_bids($con, $lot_id)
+{
+    $sql = "SELECT b.user_id, 
+               b.value as bid_value, 
+               b.date_create as bid_date_create,
+               l.id as lot_id, 
+               l.name as lot_name, 
+               l.image_url, 
+               l.date_expire as lot_date_expire, 
+               l.winner_id, 
+               u.name as candidat_name 
+        FROM bid as b 
+        JOIN lot as l 
+        ON b.lot_id = l.id 
+        JOIN user as u 
+        ON b.user_id = u.id
+        WHERE l.id = '$lot_id'
+        ORDER BY bid_value DESC";
+
+    $result = mysqli_query($con, $sql);
+
+    if (!$result) {
+        return null;
+    }
+
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
+/**
  * Возвращает строку ошибки, если пользователь при регистрации вводит уже существующий в БД email, или null
 
  * @param mysqli $con Подключение к ДБ
