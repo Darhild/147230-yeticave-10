@@ -127,7 +127,7 @@ function get_categories($con)
 function prepare_lots_query($con, $condition = "")
 {
     $sql = "SELECT 
-                  lots.*,            
+                  lots.*,
                   IFNULL(lots.current_price, lots.start_price) as price
             FROM (
                     SELECT l.*,
@@ -138,12 +138,17 @@ function prepare_lots_query($con, $condition = "")
                                WHERE b.lot_id = l.id
                                ORDER BY b.value DESC
                                LIMIT 1
-                           ) as current_price
+                           ) as current_price,
+                           (   
+                               SELECT COUNT(*)
+                               FROM bid as b
+                               WHERE b.lot_id = l.id
+                           ) as bids_num
                     FROM lot as l
                     JOIN category as c
                     ON l.category_id = c.id "
                     . $condition .
-                ") as lots ";
+                ") as lots";
 
     $result = mysqli_query($con, $sql);
     return $result;
@@ -161,7 +166,28 @@ function get_active_lots($con)
     $condition = "WHERE l.date_expire > NOW() ORDER BY l.date_expire ASC";
     $result = prepare_lots_query($con, $condition);
 
-    if($result) {
+    if ($result) {
+        $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    return $data;
+}
+
+/**
+ * Возвращает массив с данными открытых лотов из таблицы lot, соответствующих переданной категории, и их текущую цену с учётом ставок
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $category Название категории
+ * @return array Массив данных из таблицы lot
+ */
+function get_lots_by_category($con, $category)
+{
+    $data = [];
+    $category = mysqli_real_escape_string($con, $category);
+    $condition = "WHERE '$category' = c.name";
+    $result = prepare_lots_query($con, $condition);
+
+    if ($result) {
         $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
@@ -176,7 +202,7 @@ function get_active_lots($con)
  */
 function return_int_from_query($query)
 {
-   return intval($query);
+    return intval($query);
 }
 
 /**
@@ -454,7 +480,7 @@ function validate_login_form($con, $data, $validators)
     if (empty($errors)) {
         $errors["email"] = check_existing_email($con, $data["email"]);
 
-        if(empty($errors)) {
+        if (empty($errors)) {
             $errors["password"] = verify_password($con, $data);
         }
     }
@@ -637,6 +663,25 @@ function move_file($file)
 }
 
 /**
+ * Получает данные из таблицы ДБ, соответствующие переданному выражению и защищённые от sql-инъекций
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $sql Строка запроса к ДБ
+ * @param array $data Массив значений, которые передаются в подготовленное выражение, по умолчанию пустой
+ * @return string id добавленной строки
+ */
+function db_get_data($con, $sql, $data = []) {
+    $stmt = db_get_prepare_stmt($con, $sql, $data);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if ($result) {
+        $result = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    return $result;
+}
+
+/**
  * Записывает данные в таблицу ДБ и возвращает id добавленной строки
 
  * @param mysqli $con Подключение к ДБ
@@ -768,4 +813,24 @@ function return_formated_time($date) {
     }
 
     return date("d.m.Y в H:i", $ts_date);
+}
+
+/**
+ * Находит в БД лоты, соответствубющие переданному запросу
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $search Данные из массива $_GET
+ * @return array Найденные лоты или null
+ */
+function search_lots($con, $search)
+{
+    $data = mysqli_real_escape_string($con, $search);
+    $condition = "WHERE MATCH(l.name, l.description) AGAINST('$data')";
+    $result = prepare_lots_query($con, $condition);
+
+    if($result) {
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    return [];
 }

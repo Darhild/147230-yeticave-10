@@ -4,11 +4,25 @@ require_once "helpers.php";
 require_once "functions.php";
 require_once "data.php";
 
-$lots = get_active_lots($con);
+$category = get_param_from_query("category");
 
-$page_content = include_template("main.php", [
+if (isset($category)) {
+    $lots = get_lots_by_category($con, $category);
+
+    if(!isset($lots)) {
+        header("Location: error.php?code=" . ERROR_DATA_GET);
+    }
+}
+
+else {
+    header("Location: /");
+}
+
+$page_content = include_template("category.php", [
     "categories" => $categories,
-    "lots" => $lots
+    "lots" => $lots,
+    "category" => $category,
+    "nav" => $nav
 ]);
 
 $layout_content = include_template("layout.php", [
@@ -19,4 +33,3 @@ $layout_content = include_template("layout.php", [
 ]);
 
 print($layout_content);
-

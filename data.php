@@ -21,6 +21,7 @@ $error_messages = [
 ];
 
 $is_auth = isset($_SESSION["user"]);
+
 if(isset($is_auth )) {
     $user_id = $_SESSION["id"];
     $user_name = $_SESSION["user"];
@@ -41,8 +42,6 @@ $nav = include_template("nav.php", [
 $footer = include_template("footer.php", [
     "categories" => $categories
 ]);
-
-$lots = get_active_lots($con);
 
 $lot_validators = [
     "lot-name" => function ($data) {
