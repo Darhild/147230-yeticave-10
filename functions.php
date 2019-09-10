@@ -208,7 +208,7 @@ function get_lots_by_category($con, $category, $page_items = null, $offset = nul
     $condition = "WHERE '$category' = c.name";
 
     if (isset($page_items) && isset($offset)) {
-        $condition .=  " LIMIT " . $page_items . " OFFSET " . $offset; 
+        $condition .=  " LIMIT " . $page_items . " OFFSET " . $offset;
     }
 
     $result = prepare_lots_query($con, $condition);
