@@ -33,6 +33,15 @@
                     <?php endforeach; ?>
                 <?php endif; ?>
             </ul>
+            <?php if (count($pages) > 1): ?>
+                <ul class="pagination-list">                    
+                    <li class="pagination-item pagination-item-prev"><a href="/all-lots.php/?category=<?=$category; ?>&page=<?=(($cur_page - 1) > 0) ? $cur_page - 1 : 1; ?>">Назад</a></li>
+                        <?php foreach ($pages as $page): ?>
+                            <li class="pagination-item<?php if ($page === $cur_page): ?> pagination-item-active<?php endif; ?>"><a href="/all-lots.php/?category=<?=$category; ?>&page=<?=$page; ?>"><?=$page; ?></a></li>
+                        <?php endforeach; ?>
+                    <li class="pagination-item pagination-item-next"><a href="/all-lots.php/?category=<?=$category; ?>&page=<?=(($cur_page + 1) <= 0) ? $cur_page + 1 : count($pages); ?>">Вперед</a></li>                    
+                </ul>
+            <?php endif; ?>
         </section>
     </div>
 </main>

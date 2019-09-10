@@ -178,13 +178,20 @@ function get_active_lots($con)
 
  * @param mysqli $con Подключение к ДБ
  * @param string $category Название категории
+ * @param int $page_items Количество лотов, выводимых на странице. Необязательный параметр
+ * @param int $offset Строки лотов из ответа,. Необязательный параметр
  * @return array Массив данных из таблицы lot
  */
-function get_lots_by_category($con, $category)
+function get_lots_by_category($con, $category, $page_items = null, $offset = null)
 {
     $data = [];
     $category = mysqli_real_escape_string($con, $category);
     $condition = "WHERE '$category' = c.name";
+
+    if (isset($page_items) && isset($offset)) {
+        $condition .=  " LIMIT " . $page_items . " OFFSET " . $offset; 
+    }
+
     $result = prepare_lots_query($con, $condition);
 
     if ($result) {
@@ -214,7 +221,11 @@ function return_int_from_query($query)
 function get_param_from_query($param)
 {
     if ($param === "id") {
-        return return_int_from_query($_GET[$param]) ?? "";
+        return (isset($_GET[$param])) ? return_int_from_query($_GET[$param]) : "";
+    }
+
+    if ($param === "page") {
+        return (isset($_GET[$param])) ? return_int_from_query($_GET[$param]) : 1;
     }
 
     return $_GET[$param] ?? "";
