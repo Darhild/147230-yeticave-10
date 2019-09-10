@@ -4,11 +4,20 @@ require_once "helpers.php";
 require_once "functions.php";
 require_once "data.php";
 
-$lots = get_active_lots($con);
+if (!$is_auth) {
+    header("Location: error.php?code=" . ERROR_USER_NOT_AUTH);
+}
 
-$page_content = include_template("main.php", [
+$user_bids = get_user_bids($con, $user_id);
+
+if (!isset($user_bids)) {
+    header("Location: error.php?code=" . ERROR_DATA_GET);
+}
+
+$page_content = include_template("user-bids.php", [
     "categories" => $categories,
-    "lots" => $lots
+    "nav" => $nav,
+    "user_bids" => $user_bids
 ]);
 
 $layout_content = include_template("layout.php", [
@@ -19,4 +28,3 @@ $layout_content = include_template("layout.php", [
 ]);
 
 print($layout_content);
-

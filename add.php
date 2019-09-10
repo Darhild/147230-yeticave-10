@@ -24,12 +24,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $newLotId = insert_lot($con, $lots_data, $user_id);
 
         if (!isset($newLotId)) {
-            header("Location: error.php?code=" . ERROR_LOT_INSERT);
+            header("Location: error.php?code=" . ERROR_DATA_INSERT);
         }
 
         header("Location: lot.php?id=" . $newLotId);
     }
+
         $page_data["errors"] = $errors;
+
 }
 
 $page_content = include_template("add-lot.php", $page_data);
