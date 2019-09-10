@@ -1,0 +1,7 @@
+{
+    "name": "misaeva/yeticave",
+    "description": "PHP-1 htmlacademy",
+    "require": {
+        "swiftmailer/swiftmailer": "^6.2"
+    }
+}

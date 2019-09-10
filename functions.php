@@ -174,6 +174,25 @@ function get_active_lots($con)
 }
 
 /**
+ * Возвращает массив с данными истекших лотов, у которых нет победителя, из таблицы lot, название категории, к которой принадлежит лот, и его текущую цену с учётом ставок
+
+ * @param mysqli $con Подключение к ДБ
+ * @return array Массив данных из таблицы lot
+ */
+function get_lots_without_winner($con)
+{
+    $data = [];
+    $condition = "WHERE l.date_expire <= NOW() AND l.winner_id IS NULL";
+    $result = prepare_lots_query($con, $condition);
+
+    if ($result) {
+        $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    return $data;
+}
+
+/**
  * Возвращает массив с данными открытых лотов из таблицы lot, соответствующих переданной категории, и их текущую цену с учётом ставок
 
  * @param mysqli $con Подключение к ДБ
@@ -348,7 +367,8 @@ function get_lot_bids($con, $lot_id)
                l.image_url, 
                l.date_expire as lot_date_expire, 
                l.winner_id, 
-               u.name as candidat_name 
+               u.name as candidat_name,
+               u.email as candidat_email
         FROM bid as b 
         JOIN lot as l 
         ON b.lot_id = l.id 

@@ -38,7 +38,7 @@ if($is_auth) {
     }
 }
 
-if (($_SERVER["REQUEST_METHOD"] === "POST") && isset($user_last_bid) && ($user_last_bid !== $lot_item)) {
+if (($_SERVER["REQUEST_METHOD"] === "POST") && ($user_last_bid !== $lot_item)) {
     if(!$is_auth) {
         header("Location: error.php?code=" . ERROR_USER_NOT_AUTH);
     }
