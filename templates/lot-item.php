@@ -24,7 +24,7 @@
                             Мин. ставка <span><?=format_price($lot_item["price"] + $lot_item["bid_step"]); ?></span>
                         </div>
                      </div>
-                    <?php if ($is_auth && (date_create($lot_item["date_expire"]) > date_create("now")) && ($user_id !== $lot_item["seller_id"])  && ($user_last_bid !== $lot_item["id"])): ?>
+                    <?php if ($is_bid_allowed): ?>
                         <form class="lot-item__form" action="lot.php?id=<?=$lot_item["id"]; ?>" method="post" autocomplete="off">
                             <p class="lot-item__form-item form__item<?=isset($errors["cost"]) ? " form__item--invalid" : ""; ?>">
                                 <label for="cost">Ваша ставка</label>

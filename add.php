@@ -17,7 +17,7 @@ $page_data = [
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $required_fields = ["lot-name", "category", "message", "lot-rate", "lot-step", "lot-date"];
-    $lots_data = filter_post_data($required_fields);
+    $lots_data = filter_post_data($_POST, $required_fields);
     $errors = validate_lot($lots_data, $lot_validators);
 
     if (empty($errors)) {

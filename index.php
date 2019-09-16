@@ -6,7 +6,6 @@ require_once "functions.php";
 require_once "data.php";
 require_once "getwinner.php";
 
-
 $lots = get_active_lots($con);
 
 $page_content = include_template("main.php", [

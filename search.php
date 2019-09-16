@@ -12,7 +12,7 @@ $page_data = [
 $search = $_GET["search"] ?? "";
 
 if ($search) {
-    $page_data["search"] = $search;
+    $page_data["search"] = trim($search);
     $searched_lots = search_lots($con, $search);
 
     if (!isset($searched_lots)) {

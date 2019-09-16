@@ -128,27 +128,44 @@ function prepare_lots_query($con, $condition = "")
 {
     $sql = "SELECT 
                   lots.*,
-                  IFNULL(lots.current_price, lots.start_price) as price
+                  IFNULL(lots.current_price, lots.start_price) as price,
+                  u.name AS last_bid_user_name,
+                  u.email AS last_bid_user_email   
             FROM (
                     SELECT l.*,
                            c.name as category,
                            (   
                                SELECT value
                                FROM bid as b
-                               WHERE b.lot_id = l.id
-                               ORDER BY b.value DESC
+                               WHERE 
+                                    b.lot_id = l.id
+                               ORDER BY 
+                                    b.value DESC
                                LIMIT 1
                            ) as current_price,
+                           (
+                                SELECT user_id
+                                FROM bid as b
+                                WHERE 
+                                    b.lot_id = l.id
+                                ORDER BY 
+                                    b.value DESC
+                                LIMIT 1
+                            ) as last_bid_user_id,
                            (   
                                SELECT COUNT(*)
                                FROM bid as b
-                               WHERE b.lot_id = l.id
+                               WHERE 
+                                    b.lot_id = l.id
                            ) as bids_num
                     FROM lot as l
                     JOIN category as c
-                    ON l.category_id = c.id "
-                    . $condition .
-                ") as lots";
+                    ON 
+                        l.category_id = c.id 
+                    {$condition}
+                ) as lots
+                LEFT JOIN user as u
+                ON u.id = lots.last_bid_user_id";
 
     $result = mysqli_query($con, $sql);
     return $result;
@@ -163,7 +180,10 @@ function prepare_lots_query($con, $condition = "")
 function get_active_lots($con)
 {
     $data = [];
-    $condition = "WHERE l.date_expire > NOW() ORDER BY l.date_expire ASC";
+    $condition = "WHERE 
+                    l.date_expire > NOW() 
+                  ORDER BY 
+                    l.date_expire ASC";
     $result = prepare_lots_query($con, $condition);
 
     if ($result) {
@@ -182,7 +202,13 @@ function get_active_lots($con)
 function get_lots_without_winner($con)
 {
     $data = [];
-    $condition = "WHERE l.date_expire <= NOW() AND l.winner_id IS NULL";
+    $condition = "WHERE 
+                    l.date_expire <= NOW() 
+                  AND 
+                    l.winner_id IS NULL
+                  HAVING
+                    last_bid_user_id IS NOT NULL
+                  ";
     $result = prepare_lots_query($con, $condition);
 
     if ($result) {
@@ -223,31 +249,25 @@ function get_lots_by_category($con, $category, $page_items = null, $offset = nul
 /**
  * Возвращает числовое значение переменной
 
- * @param string $query Параметр, получаемый из строки запроса
+ * @param string $paramName Название параметра, получаемого из массива параметров
+ * @param array $params Массив параметров
  * @return int Числовое значение переменной
  */
-function return_int_from_query($query)
+function return_int_from_query($paramName, $params)
 {
-    return intval($query);
+    return intval(get_param_from_query($paramName, $params));
 }
 
 /**
- * Возвращает значение указанного параметра из строки запроса
+ * Возвращает значение указанного параметра из массива параметров, или пустую строку, если он не задан
 
- * @param string $param Параметр, получаемый из строки запроса
+ * @param string $paramName Название параметра, получаемого из массива параметров
+ * @param array $params Массив параметров
  * @return string Значение параметра
  */
-function get_param_from_query($param)
+function get_param_from_query($paramName, $params)
 {
-    if ($param === "id") {
-        return (isset($_GET[$param])) ? return_int_from_query($_GET[$param]) : "";
-    }
-
-    if ($param === "page") {
-        return (isset($_GET[$param])) ? return_int_from_query($_GET[$param]) : 1;
-    }
-
-    return $_GET[$param] ?? "";
+    return $params[$paramName] ?? "";
 }
 
 /**
@@ -259,11 +279,12 @@ function get_param_from_query($param)
  */
 function get_lot_by_id($con, $id)
 {
+    $id = mysqli_real_escape_string($con, $id);
     $data = [];
-    $condition = "WHERE l.id = $id";
+    $condition = "WHERE l.id = {$id}";
     $result = prepare_lots_query($con, $condition);
 
-    if($result) {
+    if ($result) {
         $data = mysqli_fetch_assoc($result);
     }
 
@@ -284,12 +305,13 @@ function get_post_val($name)
 /**
  * Возвращает массив данных из массива $_POST, отфильтрованный по нужным полям"
  *
- * @param array $fields Названия нужных полей
+ * @param array $data Данные из массива $_POST
+ * @param array $fields Названия нужных полей * 
  * @return array Массив данных
  */
-function filter_post_data($fields)
+function filter_post_data($data, $fields)
 {
-    return array_intersect_key($_POST, array_flip($fields));
+    return array_intersect_key($data, array_flip($fields));
 }
 
 /**
@@ -305,7 +327,7 @@ function get_user_from_db($con, $email)
     $sql = "SELECT * FROM user WHERE email = '$email'";
 
     $result = mysqli_query($con, $sql);
-    $user = mysqli_fetch_array($result, MYSQLI_ASSOC);
+    $user = mysqli_fetch_assoc($result);
 
     return $user;
 }
@@ -315,38 +337,43 @@ function get_user_from_db($con, $email)
 
  * @param mysqli $con Подключение к ДБ
  * @param string $user_id Id пользователя
- * @return array Данные о ставках или null
+ * @return array Данные о ставках 
  */
 
 function get_user_bids($con, $user_id)
-{
-$sql = "SELECT b.user_id, 
-               b.value as bid_value, 
-               b.date_create as bid_date_create,
-               l.id as lot_id, 
-               l.name as lot_name, 
-               l.image_url, 
-               l.date_expire as lot_date_expire, 
-               l.winner_id, 
-               u.contacts as seller_contacts, 
-               c.name as category_name 
-        FROM bid as b 
-        JOIN lot as l 
-        ON b.lot_id = l.id 
-        JOIN user as u 
-        ON l.seller_id = u.id
-        JOIN category as c 
-        ON l.category_id = c.id 
-        WHERE b.user_id = '$user_id'
-        ORDER BY bid_date_create DESC";
+{ 
+    $user_id = mysqli_real_escape_string($con, $user_id);
+    $data = [];
+    $sql = "SELECT 
+                b.user_id, 
+                b.value as bid_value, 
+                b.date_create as bid_date_create,
+                l.id as lot_id, 
+                l.name as lot_name, 
+                l.image_url, 
+                l.date_expire as lot_date_expire, 
+                l.winner_id, 
+                u.contacts as seller_contacts, 
+                c.name as category_name 
+            FROM bid as b 
+            JOIN lot as l 
+            ON b.lot_id = l.id 
+            JOIN user as u 
+            ON l.seller_id = u.id
+            JOIN category as c 
+            ON l.category_id = c.id 
+            WHERE 
+                b.user_id = {$user_id}
+            ORDER BY 
+                bid_date_create DESC";
 
     $result = mysqli_query($con, $sql);
 
-    if (!$result) {
-        return null;
+    if ($result) {
+        $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    return $data;
 }
 
 /**
@@ -354,11 +381,12 @@ $sql = "SELECT b.user_id,
 
  * @param mysqli $con Подключение к ДБ
  * @param string $lot_id Id лота
- * @return array Данные о ставках или null
+ * @return array Данные о ставках 
  */
 
 function get_lot_bids($con, $lot_id)
 {
+    $data = [];
     $sql = "SELECT b.user_id, 
                b.value as bid_value, 
                b.date_create as bid_date_create,
@@ -379,11 +407,11 @@ function get_lot_bids($con, $lot_id)
 
     $result = mysqli_query($con, $sql);
 
-    if (!$result) {
-        return null;
+    if ($result) {
+        $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    return $data;
 }
 
 /**
@@ -391,13 +419,13 @@ function get_lot_bids($con, $lot_id)
 
  * @param mysqli $con Подключение к ДБ
  * @param string $email Email пользователя
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function check_double_email($con, $email)
 {
     $user = get_user_from_db($con, $email);
 
-    if (isset($user)) {
+    if (!empty($user)) {
         return "Пользователь с этим email уже зарегистрирован";
     }
 
@@ -409,13 +437,13 @@ function check_double_email($con, $email)
 
  * @param mysqli $con Подключение к ДБ
  * @param string $email Email пользователя
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function check_existing_email($con, $email)
 {
     $user = get_user_from_db($con, $email);
 
-    if (!isset($user)) {
+    if (empty($user)) {
         return "Такой пользователь не найден";
     }
 
@@ -427,13 +455,14 @@ function check_existing_email($con, $email)
 
  * @param mysqli $con Подключение к ДБ
  * @param array $data Данные, отфильтрованные из массива $_POST
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function verify_password($con, $data)
 {
-    $user = get_user_from_db($con, $data["email"]);
+    $user = get_user_from_db($con, $data["email"]);       
 
-    if (isset($user)) {
+    if (!empty($user)) {
+        
         if (password_verify($data["password"], $user["password"])) {
             return null;
         }
@@ -449,7 +478,7 @@ function verify_password($con, $data)
 
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param array $validators Массив с правилами валидации
- * @param array $additional_data Дополнительные данные, по умолчанию пустой массиы
+ * @param array $additional_data Дополнительные данные, по умолчанию пустой массив
  * @return array Массив ошибок
  */
 function validate_form($data, $validators, $additional_data = array())
@@ -511,7 +540,9 @@ function validate_login_form($con, $data, $validators)
     if (empty($errors)) {
         $errors["email"] = check_existing_email($con, $data["email"]);
 
-        if (empty($errors)) {
+        $errors = array_filter($errors);
+
+        if (empty($errors)) {            
             $errors["password"] = verify_password($con, $data);
         }
     }
@@ -531,7 +562,7 @@ function validate_login_form($con, $data, $validators)
 function validate_lot($data, $validators)
 {
     $errors = validate_form($data, $validators);
-    $errors["lot-img"] = validate_image("lot-img");
+    $errors["lot-img"] = validate_image($_FILES["lot-img"]);
     $errors = array_filter($errors);
 
     return $errors;
@@ -543,7 +574,7 @@ function validate_lot($data, $validators)
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
  * @param array $cats_ids Массив id существующих категорий
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function validate_category($data, $field, $cats_ids)
 {
@@ -561,7 +592,7 @@ function validate_category($data, $field, $cats_ids)
 
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function validate_filled($data, $field)
 {
@@ -577,7 +608,7 @@ function validate_filled($data, $field)
 
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function validate_email($data, $field)
 {
@@ -593,7 +624,7 @@ function validate_email($data, $field)
 
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function is_num_positive_int($data, $field)
 {
@@ -610,7 +641,7 @@ function is_num_positive_int($data, $field)
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
  * @param array $lot Данные лота, полученные из таблицы lot
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function validate_bid($data, $field, $lot)
 {
@@ -626,7 +657,7 @@ function validate_bid($data, $field, $lot)
 
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function validate_date($data, $field)
 {
@@ -647,13 +678,13 @@ function validate_date($data, $field)
 /**
  * Возвращает текст ошибки, если изображение не загружено или не соответствует необходимому формату
 
- * @param string $field Имя поля в массиве $_FILES
- * @return string Текст ошибки или null
+ * @param array $file Данные изображениея
+ * @return string | null Текст ошибки или null
  */
-function validate_image($field)
+function validate_image($image)
 {
-    if (!empty($_FILES[$field]["name"])) {
-        return validate_image_format($_FILES[$field]);
+    if (!empty($image["name"])) {
+        return validate_image_format($image);
     }
 
     return "Загрузите изображение лота";
@@ -663,7 +694,7 @@ function validate_image($field)
  * Возвращает текст ошибки, если формат картинки не соответствует jpg или png, или null, если ошибки нет
 
  * @param array $file Данные файла из массива $_FILES
- * @return string Текст ошибки или null
+ * @return string | null Текст ошибки или null
  */
 function validate_image_format($file)
 {
@@ -699,7 +730,7 @@ function move_file($file)
  * @param mysqli $con Подключение к ДБ
  * @param string $sql Строка запроса к ДБ
  * @param array $data Массив значений, которые передаются в подготовленное выражение, по умолчанию пустой
- * @return string id добавленной строки
+ * @return string | bool id добавленной строки или false
  */
 function db_get_data($con, $sql, $data = []) {
     $stmt = db_get_prepare_stmt($con, $sql, $data);
@@ -718,7 +749,7 @@ function db_get_data($con, $sql, $data = []) {
  * @param mysqli $con Подключение к ДБ
  * @param string $sql Строка запроса к ДБ
  * @param array $data Массив значений, которые передаются в подготовленное выражение, по умолчанию пустой
- * @return string id добавленной строки
+ * @return string | bool id добавленной строки или false
  */
 function db_insert_data($con, $sql, $data = []) {
     $stmt = db_get_prepare_stmt($con, $sql, $data);
@@ -737,7 +768,7 @@ function db_insert_data($con, $sql, $data = []) {
  * @param mysqli $con Подключение к ДБ
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $user_id Id пользователя из сессии
- * @return string id лота
+ * @return string | bool id лота или false
  */
 function insert_lot($con, $data, $user_id)
 {
@@ -758,7 +789,7 @@ function insert_lot($con, $data, $user_id)
 
  * @param mysqli $con Подключение к ДБ
  * @param array $data Данные, отфильтрованные из массива $_POST
- * @return string id пользователя
+ * @return string | bool id пользователя или false
  */
 function insert_new_user($con, $data)
 {
@@ -770,6 +801,24 @@ function insert_new_user($con, $data)
     $sql = "INSERT INTO user (email, name, password, contacts) VALUES (?, ?, ?, ?)";
 
     return db_insert_data($con, $sql, [$email, $name, $password, $contacts]);
+}
+
+/**
+ * Записывает айди пользователя, выигравшего лот, в кололнку winner_id таблицы lot
+
+ * @param mysqli $con Подключение к ДБ
+ * @param string $user_id Айди пользователя
+ * @param string $lot_id Айди лота
+ * @return string | bool id пользователя или false
+ */
+function update_lot_winner($con, $winner_id, $lot_id)
+{
+    $data = mysqli_real_escape_string($con,  $winner_id); 
+    $sql = "UPDATE lot SET winner_id = '{$data}'
+            WHERE
+                lot.id = {$lot_id}";
+
+    return mysqli_query($con, $sql);
 }
 
 /**
@@ -851,12 +900,12 @@ function return_formated_time($date) {
 
  * @param mysqli $con Подключение к ДБ
  * @param string $search Данные из массива $_GET
- * @return array Найденные лоты или null
+ * @return array  Найденные лоты или null
  */
 function search_lots($con, $search)
 {
-    $data = mysqli_real_escape_string($con, $search);
-    $condition = "WHERE MATCH(l.name, l.description) AGAINST('$data')";
+    $data = mysqli_real_escape_string($con, $search);    
+    $condition = "WHERE MATCH(l.name, l.description) AGAINST('{$data}')";
     $result = prepare_lots_query($con, $condition);
 
     if($result) {
@@ -864,4 +913,15 @@ function search_lots($con, $search)
     }
 
     return [];
+}
+
+/**
+ * Проверяет, истёк ли лот с переданным id
+
+ * @param int $lot Id лота
+ * @return bool Истёк ли лот
+ */
+function is_lot_expired($lot) 
+{   
+    return strtotime("now") > strtotime($lot["date_expire"]);
 }

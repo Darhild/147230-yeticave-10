@@ -4,8 +4,8 @@ require_once "helpers.php";
 require_once "functions.php";
 require_once "data.php";
 
-$category = get_param_from_query("category");
-$cur_page = get_param_from_query("page");
+$category = get_param_from_query("category", $_GET);
+$cur_page = (return_int_from_query("page", $_GET) > 0) ? return_int_from_query("page", $_GET) : 1;
 
 if (isset($category)) {
     $lots = get_lots_by_category($con, $category);

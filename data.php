@@ -24,7 +24,7 @@ $user_id = null;
 $user_name = null;
 $is_auth = isset($_SESSION["user"]);
 
-if(isset($is_auth)) {
+if ($is_auth) {
     $user_id = $_SESSION["id"];
     $user_name = $_SESSION["user"];
 }
