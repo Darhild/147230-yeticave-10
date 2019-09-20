@@ -118,6 +118,28 @@ function get_categories($con)
 }
 
 /**
+ * Возвращает категорию из таблицы category в соответствии с переданным id
+
+ * @param mysqli $con Подключение к ДБ
+ * @param int $id Id категории
+ * @return array Массив данных из таблицы category
+ */
+function get_category_by_id($con, $id)
+{
+    $data = [];
+
+    $sql = "SELECT * FROM category
+            WHERE id = {$id}";
+    $result = mysqli_query($con, $sql);
+
+    if ($result) {
+        $data = mysqli_fetch_assoc($result);
+    }
+
+    return $data;
+}
+
+/**
  * Возвращает результат запроса к БД с данными таблицы лотов, категорией лота и его текущей ценой
 
  * @param mysqli $con Подключение к ДБ
@@ -183,7 +205,7 @@ function get_active_lots($con)
     $condition = "WHERE 
                     l.date_expire > NOW() 
                   ORDER BY 
-                    l.date_expire ASC";
+                    l.date_create DESC";
     $result = prepare_lots_query($con, $condition);
 
     if ($result) {
@@ -219,7 +241,7 @@ function get_lots_without_winner($con)
 }
 
 /**
- * Возвращает массив с данными открытых лотов из таблицы lot, соответствующих переданной категории, и их текущую цену с учётом ставок
+ * Возвращает массив с данными активных лотов из таблицы lot, соответствующих переданной категории, и их текущую цену с учётом ставок
 
  * @param mysqli $con Подключение к ДБ
  * @param string $category Название категории
@@ -227,11 +249,15 @@ function get_lots_without_winner($con)
  * @param int $offset Строки лотов из ответа,. Необязательный параметр
  * @return array Массив данных из таблицы lot
  */
-function get_lots_by_category($con, $category, $page_items = null, $offset = null)
+function get_active_lots_by_category($con, $category, $page_items = null, $offset = null)
 {
     $data = [];
-    $category = mysqli_real_escape_string($con, $category);
-    $condition = "WHERE '$category' = c.name";
+    $condition = "WHERE 
+                    {$category} = c.id
+                  AND 
+                    l.date_expire > NOW() 
+                  ORDER BY 
+                    l.date_create DESC";
 
     if (isset($page_items) && isset($offset)) {
         $condition .=  " LIMIT " . $page_items . " OFFSET " . $offset;
@@ -306,7 +332,7 @@ function get_post_val($name)
  * Возвращает массив данных из массива $_POST, отфильтрованный по нужным полям"
  *
  * @param array $data Данные из массива $_POST
- * @param array $fields Названия нужных полей * 
+ * @param array $fields Названия нужных полей *
  * @return array Массив данных
  */
 function filter_post_data($data, $fields)
@@ -337,11 +363,11 @@ function get_user_from_db($con, $email)
 
  * @param mysqli $con Подключение к ДБ
  * @param string $user_id Id пользователя
- * @return array Данные о ставках 
+ * @return array Данные о ставках
  */
 
 function get_user_bids($con, $user_id)
-{ 
+{
     $user_id = mysqli_real_escape_string($con, $user_id);
     $data = [];
     $sql = "SELECT 
@@ -381,7 +407,7 @@ function get_user_bids($con, $user_id)
 
  * @param mysqli $con Подключение к ДБ
  * @param string $lot_id Id лота
- * @return array Данные о ставках 
+ * @return array Данные о ставках
  */
 
 function get_lot_bids($con, $lot_id)
@@ -459,10 +485,10 @@ function check_existing_email($con, $email)
  */
 function verify_password($con, $data)
 {
-    $user = get_user_from_db($con, $data["email"]);       
+    $user = get_user_from_db($con, $data["email"]);
 
     if (!empty($user)) {
-        
+
         if (password_verify($data["password"], $user["password"])) {
             return null;
         }
@@ -542,7 +568,7 @@ function validate_login_form($con, $data, $validators)
 
         $errors = array_filter($errors);
 
-        if (empty($errors)) {            
+        if (empty($errors)) {
             $errors["password"] = verify_password($con, $data);
         }
     }
@@ -813,7 +839,7 @@ function insert_new_user($con, $data)
  */
 function update_lot_winner($con, $winner_id, $lot_id)
 {
-    $data = mysqli_real_escape_string($con,  $winner_id); 
+    $data = mysqli_real_escape_string($con,  $winner_id);
     $sql = "UPDATE lot SET winner_id = '{$data}'
             WHERE
                 lot.id = {$lot_id}";
@@ -896,23 +922,29 @@ function return_formated_time($date) {
 }
 
 /**
- * Находит в БД лоты, соответствубющие переданному запросу
+ * Находит в БД активные лоты, соответствубющие переданному запросу
 
  * @param mysqli $con Подключение к ДБ
  * @param string $search Данные из массива $_GET
- * @return array  Найденные лоты или null
+ * @return array Найденные лоты
  */
-function search_lots($con, $search)
+function search_active_lots($con, $search)
 {
-    $data = mysqli_real_escape_string($con, $search);    
-    $condition = "WHERE MATCH(l.name, l.description) AGAINST('{$data}')";
+    $data = [];
+    $string = mysqli_real_escape_string($con, $search);
+    $condition = "WHERE 
+                    MATCH(l.name, l.description) AGAINST('{$string}')
+                  AND 
+                    l.date_expire > NOW() 
+                  ORDER BY 
+                    l.date_create DESC";
     $result = prepare_lots_query($con, $condition);
 
     if($result) {
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    return [];
+    return $data;
 }
 
 /**
@@ -921,7 +953,25 @@ function search_lots($con, $search)
  * @param int $lot Id лота
  * @return bool Истёк ли лот
  */
-function is_lot_expired($lot) 
-{   
+function is_lot_expired($lot)
+{
     return strtotime("now") > strtotime($lot["date_expire"]);
+}
+
+function get_pages_info($data, $lots, $page_items) {
+    $result = [];
+    $result["cur_page"] = (return_int_from_query("page", $data) > 0) ? return_int_from_query("page", $data) : 1;
+    $result["pages"] = [0];
+    $items_count = count($lots);
+    $pages_count = (int) ceil($items_count / $page_items);
+
+    if ($items_count > 0) {
+        $result["pages"] = range(1, $pages_count);
+    }
+
+    if ($pages_count > 1) {
+        $result["offset"] = ($result["cur_page"] - 1) * $page_items;
+    }
+
+    return $result;
 }

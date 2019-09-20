@@ -2,8 +2,8 @@
     <?=$nav; ?>
     <div class="container">
         <section class="lots">
-            <?php if (isset($search)): ?>
-                <h2>Результаты поиска по запросу <span>«<?=$search; ?>»</span></h2>            
+            <?php if (!empty($search)): ?>
+                <h2>Результаты поиска по запросу <span>«<?=$search; ?>»</span></h2>
                 <ul class="lots__list">
                     <?php if (empty($searched_lots)): ?>
                         <?="<p>Ничего не найдено по вашему запросу.</p>"; ?>
@@ -33,8 +33,11 @@
                             </li>
                         <?php endforeach; ?>
                     <?php endif; ?>
-                <?php endif; ?>
-            </ul>
+                </ul>
+            <?php else: ?>
+                <?="<p>Вы не ввели поисковый запрос.</p>"; ?>
+            <?php endif; ?>
+            <?=$pagination_block; ?>
         </section>
     </div>
 </main>

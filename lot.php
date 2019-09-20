@@ -24,7 +24,6 @@ $is_bid_allowed = $is_auth
     && (int) $user_id !== (int) $lot["seller_id"]
     && !is_lot_expired($lot);
 
-
 $page_data = [
     "categories" => $categories,
     "nav" => $nav,

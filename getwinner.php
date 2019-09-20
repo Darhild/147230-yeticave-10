@@ -1,6 +1,6 @@
 <?php
 $lots_without_winner = get_lots_without_winner($con);
-
+/*
 if(!empty($lots_without_winner)) {
     $transport = new Swift_SmtpTransport("phpdemo.ru", 25);
     $transport->setUserName("keks@phpdemo.ru");
@@ -8,9 +8,7 @@ if(!empty($lots_without_winner)) {
 
     $mailer = new Swift_Mailer($transport);
 
-
-
-    foreach($lots_without_winner as $lot) {      
+    foreach($lots_without_winner as $lot) {
         [
             "last_bid_user_id" => $winner_id,
             "last_bid_user_name" => $winner_name,
@@ -34,6 +32,7 @@ if(!empty($lots_without_winner)) {
     }
 }
 
+*/
 
 
 
