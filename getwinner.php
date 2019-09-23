@@ -1,6 +1,6 @@
 <?php
 $lots_without_winner = get_lots_without_winner($con);
-/*
+
 if(!empty($lots_without_winner)) {
     $transport = new Swift_SmtpTransport("phpdemo.ru", 25);
     $transport->setUserName("keks@phpdemo.ru");
@@ -32,7 +32,7 @@ if(!empty($lots_without_winner)) {
     }
 }
 
-*/
+
 
 
 
