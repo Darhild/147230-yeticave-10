@@ -13,15 +13,15 @@ $search = $_GET["search"] ?? "";
 
 if ($search) {
     $page_data["search"] = trim($search);
-    $lots = search_active_lots($con, $search, $page_items, $offset);
+    $lots = search_active_lots($con, $search);
     $page_data["lots"] = $lots;
-    $page_items = 9;
+    $page_items = 1;
 
     require_once "pagination-data.php";
 
     if ($pages_count > 1) {
-        $page_data["lots"] = search_active_lots($con, $search, $page_items, $offset);       
-        $pagination_data["link"] = "/search.php/?search=${search}&page=";
+        $page_data["lots"] = search_active_lots($con, $search, $cur_page, $page_items);       
+        $pagination_data["link"] = "/search.php?search=${search}&page=";
         $page_data["pagination_block"] = include_template("pagination_block.php", $pagination_data);
     }
 }

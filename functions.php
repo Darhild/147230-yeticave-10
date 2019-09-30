@@ -247,10 +247,10 @@ function get_lots_without_winner($con)
  * @param mysqli $con Подключение к ДБ
  * @param string $category Название категории
  * @param int $page_items Количество лотов, выводимых на странице. Необязательный параметр
- * @param int $offset Количество игнорируемых строк из ответа. Необязательный параметр
+ * @param int $cur_page Номер текущей страницы. Необязательный параметр
  * @return array Массив данных из таблицы lot
  */
-function get_active_lots_by_category($con, $category, $page_items = null, $offset = null)
+function get_active_lots_by_category($con, $category, $cur_page = null, $page_items = null)
 {
     $data = [];
     $condition = "WHERE 
@@ -260,8 +260,9 @@ function get_active_lots_by_category($con, $category, $page_items = null, $offse
                   ORDER BY 
                     l.date_create DESC";
 
-    if (isset($page_items) && isset($offset)) {
-        $condition .=  " LIMIT " . $page_items . " OFFSET " . $offset;
+    if (isset($page_items) && isset($cur_page)) {
+        $offset = ($cur_page - 1) * $page_items;
+        $condition .=  " LIMIT {$page_items} OFFSET {$offset}";
     }
 
     $result = prepare_lots_query($con, $condition);
@@ -927,11 +928,11 @@ function return_formated_time($date) {
 
  * @param mysqli $con Подключение к ДБ
  * @param string $search Данные из массива $_GET
+ * @param int $cur_page Номер текущей страницы. Необязательный параметр
  * @param int $page_items Количество лотов, выводимых на странице. Необязательный параметр
- * @param int $offset Количество игнорируемых строк из ответа. Необязательный параметр
  * @return array Найденные лоты
  */
-function search_active_lots($con, $search, $page_items = null, $offset = null)
+function search_active_lots($con, $search, $cur_page = null, $page_items = null)
 {
     $data = [];
     $string = mysqli_real_escape_string($con, $search);
@@ -942,9 +943,10 @@ function search_active_lots($con, $search, $page_items = null, $offset = null)
                   ORDER BY 
                     l.date_create DESC";
 
-    if (isset($page_items) && isset($offset)) {
-        $condition .=  " LIMIT " . $page_items . " OFFSET " . $offset;
-    }    
+    if (isset($page_items) && isset($cur_page)) {
+        $offset = ($cur_page - 1) * $page_items;
+        $condition .=  " LIMIT {$page_items} OFFSET {$offset}";
+    }
 
     $result = prepare_lots_query($con, $condition);
 
@@ -967,26 +969,21 @@ function is_lot_expired($lot)
 }
 
 /**
- * Возвращает данные для построения блока пагинации: текущая страница, количество страниц, массив с номерами всех страниц, сколько лотов из запроса должны быть проигнорированы
+ * Возвращает данные для построения блока пагинации: количество страниц, массив с номерами всех страниц, сколько лотов из запроса должны быть проигнорированы
 
- * @param $data Массив параметров из запроса
+ * @param int $page Текущая страница
  * @param array $lots Массив с данными лотов
  * @param int $page_items Количество лотов, которые должны отображаться на странице
  * @return array Массив данных
  */
-function get_pages_info($data, $lots, $page_items) {
+function get_pages_info($page, $lots, $page_items) {
     $result = [];
-    $result["cur_page"] = (return_int_from_query("page", $data) > 0) ? return_int_from_query("page", $data) : 1;
     $result["pages"] = [0];
     $items_count = count($lots);
     $pages_count = (int) ceil($items_count / $page_items);
 
     if ($items_count > 0) {
         $result["pages"] = range(1, $pages_count);
-    }
-
-    if ($pages_count > 1) {
-        $result["offset"] = ($result["cur_page"] - 1) * $page_items;
     }
 
     $result["pages_count"] = $pages_count;
