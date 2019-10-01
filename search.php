@@ -7,6 +7,7 @@ require_once "data.php";
 $page_data = [
     "categories" => $categories,
     "nav" => $nav,
+    "pagination_block" => ""
 ];
 
 $search = $_GET["search"] ?? "";
@@ -15,7 +16,7 @@ if ($search) {
     $page_data["search"] = trim($search);
     $lots = search_active_lots($con, $search);
     $page_data["lots"] = $lots;
-    $page_items = 1;
+    $page_items = 9;
 
     require_once "pagination-data.php";
 

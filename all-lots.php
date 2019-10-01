@@ -18,10 +18,11 @@ $page_data = [
     "lots" => $lots,
     "category_id" => $category_id,
     "category_name" => $category_name,
-    "nav" => $nav
+    "pagination_block" => "",
+    "nav" => $nav    
 ];
 
-$page_items = 1;
+$page_items = 9;
 
 require_once "pagination-data.php";
 

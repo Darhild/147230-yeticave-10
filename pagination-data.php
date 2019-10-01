@@ -12,3 +12,4 @@ $cur_page = (return_int_from_query("page", $_GET) > 0)
 $pagination_data["cur_page"] = $cur_page;
 $pagination_data["pages"] = $pages;
 $pagination_data["pages_count"] = $pages_count;
+
