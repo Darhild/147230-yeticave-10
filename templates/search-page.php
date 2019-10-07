@@ -3,7 +3,7 @@
     <div class="container">
         <section class="lots">
             <?php if (!empty($search)): ?>
-                <h2>Результаты поиска по запросу <span>«<?=$search; ?>»</span></h2>
+                <h2>Результаты поиска по запросу <span>«<?=strip_tags($search); ?>»</span></h2>
                 <ul class="lots__list">
                     <?php if (empty($lots)): ?>
                         <?="<p>Ничего не найдено по вашему запросу.</p>"; ?>

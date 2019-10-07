@@ -47,6 +47,9 @@ $footer = include_template("footer.php", [
 
 $lot_validators = [
     "lot-name" => function ($data) {
+        if (!validate_filled($data, "lot-name")) {
+            return is_correct_length($data, "lot-name", 255);
+        }
         return validate_filled($data, "lot-name");
     },
     "category" => function ($data) use ($cats_ids) {
@@ -89,14 +92,23 @@ $bid_validators = [
 
 $user_validators = [
     "name" => function ($data) {
-        return validate_filled($data, "name");
+        if (!validate_filled($data, "name")) {
+            return is_correct_length($data, "name", 255);
+        }
+        return validate_filled($data, "lot-name");
     },
     "password" => function ($data) {
+        if (!validate_filled($data, "password")) {
+            return is_correct_length($data, "password", 64);
+        }
         return validate_filled($data, "password");
     },
     "email" => function ($data) {
         if (!validate_filled($data, "email")) {
-            return validate_email($data, "email");
+            if(!is_correct_length($data, "email", 255)) {
+                return validate_email($data, "email");
+            }
+            return is_correct_length($data, "email", 255);            
         }
         return validate_filled($data, "email");
     },

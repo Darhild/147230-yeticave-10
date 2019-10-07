@@ -21,11 +21,11 @@ VALUES
 INSERT into lot
 (name, description, image_url, start_price, date_expire, bid_step, seller_id, category_id)
 VALUES
-("2014 Rossignol District Snowboard", "Великолепная доска", "/img/lot-1.jpg", 10999, "2019-09-27", 500, 1, 1),
-("DC Ply Mens 2016/2017 Snowboard", "Мегавеликолепная доска", "/img/lot-2.jpg", 159999, "2019-09-28", 2000, 2, 1),
-("Крепления Union Contact Pro 2015 года размер L/XL", "Великолепные крепления", "/img/lot-3.jpg", 8000, "2019-09-29", 500, 2, 2),
-("Ботинки для сноуборда DC Mutiny Charocal", "Великолепные ботинки", "/img/lot-4.jpg", 10999, "2019-09-30", 1000, 1, 3),
-("Куртка для сноуборда DC Mutiny Charocal", "Великолепная куртка", "/img/lot-5.jpg", 7500, "2019-10-01", 500, 1, 4),
+("2014 Rossignol District Snowboard", "Великолепная доска", "/img/lot-1.jpg", 10999, "2019-10-27", 500, 1, 1),
+("DC Ply Mens 2016/2017 Snowboard", "Мегавеликолепная доска", "/img/lot-2.jpg", 159999, "2019-10-28", 2000, 2, 1),
+("Крепления Union Contact Pro 2015 года размер L/XL", "Великолепные крепления", "/img/lot-3.jpg", 8000, "2019-10-29", 500, 2, 2),
+("Ботинки для сноуборда DC Mutiny Charocal", "Великолепные ботинки", "/img/lot-4.jpg", 10999, "2019-10-30", 1000, 1, 3),
+("Куртка для сноуборда DC Mutiny Charocal", "Великолепная куртка", "/img/lot-5.jpg", 7500, "2019-11-01", 500, 1, 4),
 ("Маска Oakley Canopy", "Великолепные очки", "/img/lot-6.jpg", 5400, "2019-10-02", 100, 2, 6);
 
 /* Добавить ставки */

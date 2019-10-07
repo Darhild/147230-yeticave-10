@@ -12,6 +12,7 @@ $page_data = [
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $required_fields = ["email", "password"];
     $user_data = filter_post_data($_POST, $required_fields);
+    $page_data["user_data"] = $user_data;
     $errors = validate_login_form($con, $user_data, $user_validators);
 
     if (empty($errors)) {

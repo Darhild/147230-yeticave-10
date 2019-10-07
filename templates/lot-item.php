@@ -28,7 +28,7 @@
                         <form class="lot-item__form" action="lot.php?id=<?=$lot_item["id"]; ?>" method="post" autocomplete="off">
                             <p class="lot-item__form-item form__item<?=isset($errors["cost"]) ? " form__item--invalid" : ""; ?>">
                                 <label for="cost">Ваша ставка</label>
-                                <input id="cost" type="text" name="cost" placeholder="<?=$lot_item["price"] + $lot_item["bid_step"]; ?>" value="<?=get_post_val("cost"); ?>">
+                                <input id="cost" type="text" name="cost" placeholder="<?=$lot_item["price"] + $lot_item["bid_step"]; ?>" value="<?=strip_tags($bid); ?>">
                                 <span class="form__error"><?=$errors["cost"] ?? ""; ?></span>
                             </p>
                             <button type="submit" class="button">Сделать ставку</button>
@@ -40,7 +40,7 @@
                     <table class="history__list">
                         <?php foreach($lot_bids as $lot_bid): ?>
                         <tr class="history__item">
-                            <td class="history__name"><?=$lot_bid["candidat_name"]; ?></td>
+                            <td class="history__name"><?=strip_tags($lot_bid["candidat_name"]); ?></td>
                             <td class="history__price"><?=format_price($lot_bid["bid_value"]); ?></td>
                             <td class="history__time"><?=return_formated_time($lot_bid["bid_date_create"]); ?></td>
                         </tr>

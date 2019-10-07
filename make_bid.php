@@ -1,5 +1,6 @@
 <?php
 $bid_data = filter_post_data($_POST, ["cost"]);
+$page_data["bid"] = $bid_data["cost"];
 $errors = validate_form($bid_data, $bid_validators, $lot);
 
 if (empty($errors)) {

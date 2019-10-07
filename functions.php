@@ -308,7 +308,7 @@ function get_lot_by_id($con, $id) {
  * @return string Значение поля
  */
 function get_post_val($name) {
-    return $_POST[$name]??"";
+    return $_POST[$name] ?? "";
 }
 
 /**
@@ -596,6 +596,23 @@ function validate_email($data, $field) {
 }
 
 /**
+ * Возвращает текст ошибки, если длина переданного поля превышает указанную максимальную длину
+ * @param array $data Данные, отфильтрованные из массива $_POST
+ * @param string $field Имя поля в массиве $_POST
+ * @param int $max Максимальная длина поля
+ * @return string | null Текст ошибки или null
+ */
+function is_correct_length($data, $field, $max) {
+    $len = strlen($data[$field]);
+
+    if ($len > $max) {
+        return "Значение должно быть менее $max символов"; 
+    }
+
+    return null;
+}
+
+/**
  * Возвращает текст ошибки, если в поле формы указано не целое положительное число, или null, если ошибки нет
  * @param array $data Данные, отфильтрованные из массива $_POST
  * @param string $field Имя поля в массиве $_POST
@@ -655,7 +672,7 @@ function validate_image($image) {
         return validate_image_format($image);
     }
 
-    return "Заг��узите изображение лота";
+    return "Загруузите изображение лота";
 }
 
 /**
@@ -680,7 +697,9 @@ function validate_image_format($file) {
  * @return string Текст ошибки
  */
 function move_file($file) {
-    $file_name = $file["name"];
+    $info = new SplFileInfo($file["name"]);
+    $extension = $info->getExtension();
+    $file_name = md5(microtime() . rand(0, 9999)) . '.' . $extension;
     $file_path = __DIR__ . '/uploads/';
     $file_url = '/uploads/' . $file_name;
     move_uploaded_file($file["tmp_name"], $file_path . $file_name);
